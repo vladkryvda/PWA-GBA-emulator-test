@@ -47,6 +47,10 @@ html, body, #root {
   touch-action: none;
 }
 
+canvas {
+  outline: none;
+}
+
 /* Base UI styles */
 button {
   background: none;

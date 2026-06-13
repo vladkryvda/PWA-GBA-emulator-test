@@ -99,6 +99,8 @@ export function Emulator({ gameId, onExit }: EmulatorProps) {
           touch-action: none;
           user-select: none;
           -webkit-user-select: none;
+          height: 100dvh;
+          width: 100dvw;
         }
         .game-screen-area {
           position: relative;
@@ -121,24 +123,52 @@ export function Emulator({ gameId, onExit }: EmulatorProps) {
         
         .ab-wrapper {
           position: relative;
-          width: 120px;
-          height: 120px;
+          width: 160px;
+          height: 160px;
         }
-        .b-btn, .a-btn {
+        .b-btn-touch, .a-btn-touch {
           position: absolute;
+          width: 80px;
+          height: 80px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          pointer-events: auto;
+        }
+        .b-btn-touch { left: 0; bottom: 0; }
+        .a-btn-touch { right: 0; top: 0; }
+        
+        .btn-visual-round {
           width: 56px;
           height: 56px;
+          border-radius: 28px;
+          border: 1px solid rgba(150, 150, 150, 0.4);
           display: flex;
           align-items: center;
           justify-content: center;
         }
-        .b-btn { left: 0; bottom: 0; }
-        .a-btn { right: 0; top: 0; }
+
+        .btn-visual-shoulder {
+          width: 80px;
+          height: 32px;
+          border-radius: 16px;
+          border: 1px solid rgba(150, 150, 150, 0.4);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .shoulder-touch {
+          padding: 16px;
+          margin: -16px;
+          pointer-events: auto;
+        }
 
         .ctrl-top-left { position: absolute; top: 16px; left: 16px; pointer-events: auto; }
         .ctrl-top-right { position: absolute; top: 16px; right: 16px; pointer-events: auto; }
         .ctrl-bottom-left { position: absolute; bottom: 32px; left: 32px; pointer-events: auto; }
-        .ctrl-bottom-center { position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%); display: flex; gap: 24px; align-items: flex-end; pointer-events: auto; }
+        .ctrl-bottom-startselect { position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%); display: flex; gap: 40px; align-items: flex-end; pointer-events: auto; }
+        .ctrl-bottom-exit { position: absolute; top: 16px; left: 50%; transform: translateX(-50%); display: flex; align-items: flex-end; pointer-events: auto; }
         .ctrl-bottom-right { position: absolute; bottom: 32px; right: 96px; pointer-events: auto; }
 
         @media (orientation: portrait) {
@@ -147,22 +177,26 @@ export function Emulator({ gameId, onExit }: EmulatorProps) {
             width: 100%;
             height: 66vw;
             margin-top: env(safe-area-inset-top, 0px);
+            background-color: #000;
           }
           .controls-area {
             position: relative;
             flex: 1;
             width: 100%;
+            background-color: #000;
           }
           .ctrl-top-left { top: 16px; left: 16px; }
           .ctrl-top-right { top: 16px; right: 16px; }
           .ctrl-bottom-left { bottom: 80px; left: 32px; opacity: 1 !important; }
-          .ctrl-bottom-right { bottom: 80px; right: 40px; opacity: 1 !important; }
-          .ctrl-bottom-center { bottom: 24px; top: unset; gap: 40px; }
+          .ctrl-bottom-right { bottom: 80px; right: 24px; opacity: 1 !important; }
+          .ctrl-bottom-startselect { bottom: 80px; gap: 48px; }
+          .ctrl-bottom-exit { bottom: 24px; top: unset; }
           
           .ab-wrapper {
-            width: 140px;
-            height: 140px;
+            width: 180px;
+            height: 180px;
           }
+          .a-btn-touch { right: -16px; top: -16px; }
         }
       `}</style>
       
@@ -178,32 +212,36 @@ export function Emulator({ gameId, onExit }: EmulatorProps) {
           {/* Top Left: L */}
           <div className="ctrl-top-left hideable-controls" style={{ opacity: controlsVisible ? 1 : 0 }} onTouchStart={handlePointerDown} onTouchMove={handlePointerMove}>
             <div 
-              style={styles.shoulderBtn}
+              className="shoulder-touch"
               onTouchStart={() => btnPress('l')}
               onTouchEnd={() => btnRelease('l')}
             >
-              <span style={styles.outlinedText}>L</span>
+              <div style={styles.shoulderBtn} className="btn-visual-shoulder">
+                <span style={styles.outlinedText}>L</span>
+              </div>
             </div>
           </div>
 
           {/* Top Right: R */}
           <div className="ctrl-top-right hideable-controls" style={{ opacity: controlsVisible ? 1 : 0 }} onTouchStart={handlePointerDown} onTouchMove={handlePointerMove}>
             <div 
-              style={styles.shoulderBtn}
+              className="shoulder-touch"
               onTouchStart={() => btnPress('r')}
               onTouchEnd={() => btnRelease('r')}
             >
-              <span style={styles.outlinedText}>R</span>
+              <div style={styles.shoulderBtn} className="btn-visual-shoulder">
+                <span style={styles.outlinedText}>R</span>
+              </div>
             </div>
           </div>
 
           {/* Bottom Left: Thumbstick */}
-          <div className="ctrl-bottom-left hideable-controls" style={{ opacity: controlsVisible ? 1 : 0 }} onTouchStart={handlePointerDown} onTouchMove={handlePointerMove}>
+          <div className="ctrl-bottom-left" onTouchStart={handlePointerDown} onTouchMove={handlePointerMove}>
             <Thumbstick onMove={handleStickMove} onRelease={handleStickRelease} />
           </div>
 
-          {/* Bottom Center: Select, Start, Exit */}
-          <div className="ctrl-bottom-center hideable-controls" style={{ opacity: controlsVisible ? 1 : 0 }} onTouchStart={handlePointerDown} onTouchMove={handlePointerMove}>
+          {/* Bottom Center: Select, Start */}
+          <div className="ctrl-bottom-startselect hideable-controls" style={{ opacity: controlsVisible ? 1 : 0 }} onTouchStart={handlePointerDown} onTouchMove={handlePointerMove}>
             <div style={styles.pillContainer}>
               <div 
                 style={styles.pillBtn}
@@ -211,18 +249,6 @@ export function Emulator({ gameId, onExit }: EmulatorProps) {
                 onTouchEnd={() => btnRelease('select')}
               ></div>
               <span style={styles.outlinedTextSmall}>SELECT</span>
-            </div>
-
-            <div style={styles.pillContainer}>
-              <button 
-                style={styles.roundSmallBtn}
-                onClick={onExit}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M19 12H5M12 19l-7-7 7-7" />
-                </svg>
-              </button>
-              <span style={styles.outlinedTextSmall}>EXIT</span>
             </div>
 
             <div style={styles.pillContainer}>
@@ -235,22 +261,40 @@ export function Emulator({ gameId, onExit }: EmulatorProps) {
             </div>
           </div>
 
+          <div className="ctrl-bottom-exit hideable-controls" style={{ opacity: controlsVisible ? 1 : 0 }} onTouchStart={handlePointerDown} onTouchMove={handlePointerMove}>
+            <div style={styles.pillContainer}>
+              <button 
+                style={styles.roundSmallBtn}
+                onClick={onExit}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M19 12H5M12 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <span style={styles.outlinedTextSmall}>EXIT</span>
+            </div>
+          </div>
+
           {/* Bottom Right: A/B */}
-          <div className="ctrl-bottom-right hideable-controls" style={{ opacity: controlsVisible ? 1 : 0 }} onTouchStart={handlePointerDown} onTouchMove={handlePointerMove}>
+          <div className="ctrl-bottom-right" onTouchStart={handlePointerDown} onTouchMove={handlePointerMove}>
             <div className="ab-wrapper">
               <div 
-                className="b-btn"
+                className="b-btn-touch"
                 onTouchStart={() => btnPress('b')}
                 onTouchEnd={() => btnRelease('b')}
               >
-                <span style={styles.outlinedTextLarge}>B</span>
+                <div style={styles.bBtn} className="btn-visual-round">
+                  <span style={styles.outlinedTextLarge}>B</span>
+                </div>
               </div>
               <div 
-                className="a-btn"
+                className="a-btn-touch"
                 onTouchStart={() => btnPress('a')}
                 onTouchEnd={() => btnRelease('a')}
               >
-                <span style={styles.outlinedTextLarge}>A</span>
+                <div style={styles.aBtn} className="btn-visual-round">
+                  <span style={styles.outlinedTextLarge}>A</span>
+                </div>
               </div>
             </div>
           </div>
@@ -263,31 +307,36 @@ export function Emulator({ gameId, onExit }: EmulatorProps) {
 
 function Thumbstick({ onMove, onRelease }: { onMove: (x: number, y: number) => void, onRelease: () => void }) {
   const baseRef = useRef<HTMLDivElement>(null);
-  const [activeInfo, setActiveInfo] = useState<{id: number, x: number, y: number} | null>(null);
+  const knobRef = useRef<HTMLDivElement>(null);
+  const activeIdRef = useRef<number | null>(null);
 
   const handleTouchStart = (e: React.TouchEvent) => {
-    if (activeInfo) return;
+    if (activeIdRef.current !== null) return;
     const touch = e.changedTouches[0];
+    activeIdRef.current = touch.identifier;
     updatePosition(touch);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (!activeInfo) return;
-    const touch = Array.from(e.changedTouches).find((t: React.Touch) => t.identifier === activeInfo.id);
+    if (activeIdRef.current === null) return;
+    const touch = Array.from(e.changedTouches).find((t: React.Touch) => t.identifier === activeIdRef.current);
     if (touch) updatePosition(touch);
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
-    if (!activeInfo) return;
-    const touch = Array.from(e.changedTouches).find((t: React.Touch) => t.identifier === activeInfo.id);
+    if (activeIdRef.current === null) return;
+    const touch = Array.from(e.changedTouches).find((t: React.Touch) => t.identifier === activeIdRef.current);
     if (touch) {
-      setActiveInfo(null);
+      activeIdRef.current = null;
+      if (knobRef.current) {
+        knobRef.current.style.transform = `translate(-50%, -50%)`;
+      }
       onRelease();
     }
   };
 
   const updatePosition = (touch: React.Touch) => {
-    if (!baseRef.current) return;
+    if (!baseRef.current || !knobRef.current) return;
     const rect = baseRef.current.getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;
     const centerY = rect.top + rect.height / 2;
@@ -302,11 +351,7 @@ function Thumbstick({ onMove, onRelease }: { onMove: (x: number, y: number) => v
       dy = (dy / dist) * maxRadius;
     }
     
-    setActiveInfo({
-      id: touch.identifier,
-      x: dx,
-      y: dy
-    });
+    knobRef.current.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
     
     onMove(dx / maxRadius, dy / maxRadius);
   };
@@ -323,9 +368,10 @@ function Thumbstick({ onMove, onRelease }: { onMove: (x: number, y: number) => v
       <div style={styles.stickOuterRing}></div>
       <div style={styles.stickInnerTrack}></div>
       <div 
+        ref={knobRef}
         style={{
           ...styles.stickKnob,
-          transform: `translate(calc(-50% + ${activeInfo ? activeInfo.x : 0}px), calc(-50% + ${activeInfo ? activeInfo.y : 0}px))`
+          transform: `translate(-50%, -50%)`
         }}
       >
         <div style={styles.stickKnobInner}></div>
@@ -351,14 +397,10 @@ const styles: Record<string, React.CSSProperties> = {
     imageRendering: 'pixelated' as any,
   },
   shoulderBtn: {
-    width: '80px',
-    height: '32px',
     backgroundColor: 'transparent',
-    borderRadius: '16px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    border: 'none',
   },
   abWrapper: {
     position: 'relative',
@@ -366,30 +408,10 @@ const styles: Record<string, React.CSSProperties> = {
     height: '120px',
   },
   bBtn: {
-    position: 'absolute',
-    left: 0,
-    bottom: 0,
-    width: '56px',
-    height: '56px',
     backgroundColor: 'transparent',
-    borderRadius: '28px',
-    border: 'none',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   aBtn: {
-    position: 'absolute',
-    right: 0,
-    top: 0,
-    width: '56px',
-    height: '56px',
     backgroundColor: 'transparent',
-    borderRadius: '28px',
-    border: 'none',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   pillContainer: {
     display: 'flex',
@@ -402,14 +424,14 @@ const styles: Record<string, React.CSSProperties> = {
     height: '16px',
     backgroundColor: 'transparent',
     borderRadius: '8px',
-    border: 'none',
+    border: '1px solid rgba(150, 150, 150, 0.4)',
   },
   roundSmallBtn: {
     width: '24px',
     height: '24px',
     backgroundColor: 'transparent',
     borderRadius: '12px',
-    border: 'none',
+    border: '1px solid rgba(150, 150, 150, 0.4)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -442,7 +464,7 @@ const styles: Record<string, React.CSSProperties> = {
     top: 0, left: 0, right: 0, bottom: 0,
     backgroundColor: 'transparent',
     borderRadius: '60px',
-    border: 'none',
+    border: '1px solid rgba(150, 150, 150, 0.4)',
   },
   stickInnerTrack: {
     display: 'none',
@@ -455,7 +477,7 @@ const styles: Record<string, React.CSSProperties> = {
     height: '40px',
     backgroundColor: 'transparent',
     borderRadius: '20px',
-    border: 'none',
+    border: '1px solid rgba(150, 150, 150, 0.4)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
