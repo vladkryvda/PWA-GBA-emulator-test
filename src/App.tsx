@@ -1,12 +1,9 @@
 import React, { useState } from 'react';
 import { Library } from './components/Library';
 import { Emulator } from './components/Emulator';
-import { Overlay } from './components/Overlay';
-import { useOrientation } from './hooks/useOrientation';
 
 export default function App() {
   const [activeGameId, setActiveGameId] = useState<string | null>(null);
-  const { isPortrait } = useOrientation();
 
   // If a game is active and orientation is portrait, the emulator itself might freeze? 
   // Nostalgist allows pausing. We're keeping it simple: just unmount the overlay on top, the requestAnimationFrame in emulator handles its own limits.

@@ -32,8 +32,24 @@ export function Emulator({ gameId, onExit }: EmulatorProps) {
     };
     init();
 
+    const handleResize = () => {
+      setTimeout(() => {
+        if (engineRef.current?.nostalgistInstance && canvasRef.current) {
+          try {
+            const rect = canvasRef.current.getBoundingClientRect();
+            engineRef.current.nostalgistInstance.resize({ width: rect.width, height: rect.height });
+          } catch(e) {}
+        }
+      }, 300);
+    };
+
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleResize);
+
     return () => {
       active = false;
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
       if (engineRef.current) {
         engineRef.current.exit();
         engineRef.current = null;
@@ -119,9 +135,9 @@ export function Emulator({ gameId, onExit }: EmulatorProps) {
         
         .ctrl-top-left { position: absolute; top: 16px; left: 16px; pointer-events: auto; }
         .ctrl-top-right { position: absolute; top: 16px; right: 16px; pointer-events: auto; }
-        .ctrl-bottom-left { position: absolute; bottom: 16px; left: 16px; pointer-events: auto; }
+        .ctrl-bottom-left { position: absolute; bottom: 16px; left: 48px; pointer-events: auto; }
         .ctrl-bottom-center { position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); display: flex; gap: 24px; align-items: flex-end; pointer-events: auto; }
-        .ctrl-bottom-right { position: absolute; bottom: 16px; right: 48px; pointer-events: auto; }
+        .ctrl-bottom-right { position: absolute; bottom: 16px; right: 64px; pointer-events: auto; }
 
         @media (orientation: portrait) {
           .game-screen-area {
@@ -138,9 +154,9 @@ export function Emulator({ gameId, onExit }: EmulatorProps) {
           }
           .ctrl-top-left { top: 20px; left: 20px; }
           .ctrl-top-right { top: 20px; right: 20px; }
-          .ctrl-bottom-left { bottom: 80px; left: 20px; }
+          .ctrl-bottom-left { bottom: 80px; left: 32px; }
           .ctrl-bottom-center { bottom: 30px; }
-          .ctrl-bottom-right { bottom: 80px; right: 20px; }
+          .ctrl-bottom-right { bottom: 80px; right: 32px; }
         }
       `}</style>
       
