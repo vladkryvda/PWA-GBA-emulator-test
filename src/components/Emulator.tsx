@@ -15,20 +15,29 @@ export function Emulator({ gameId, onExit }: EmulatorProps) {
   );
 
   useEffect(() => {
-    const handleResize = () => {
+    let isProgrammatic = false;
+
+    const handleResize = (e?: Event) => {
+      if (isProgrammatic || (e && (e as any).isProgrammatic)) {
+        return;
+      }
+
       const currentOrientation = window.innerHeight > window.innerWidth ? 'portrait' : 'landscape';
       setOrientation(currentOrientation);
       
-      // Dispatch multiple window resize events so retroarch correctly adapts WebGL sizes
-      setTimeout(() => {
-        window.dispatchEvent(new Event('resize'));
-      }, 50);
-      setTimeout(() => {
-        window.dispatchEvent(new Event('resize'));
-      }, 150);
-      setTimeout(() => {
-        window.dispatchEvent(new Event('resize'));
-      }, 350);
+      const dispatchFakeResize = () => {
+        isProgrammatic = true;
+        const resizeEvent = new Event('resize');
+        (resizeEvent as any).isProgrammatic = true;
+        window.dispatchEvent(resizeEvent);
+        isProgrammatic = false;
+      };
+
+      // Staggered timeouts to ensure retroarch correctly adapts WebGL sizes once CSS settles
+      setTimeout(dispatchFakeResize, 50);
+      setTimeout(dispatchFakeResize, 150);
+      setTimeout(dispatchFakeResize, 350);
+      setTimeout(dispatchFakeResize, 600);
     };
 
     window.addEventListener('resize', handleResize);
@@ -151,16 +160,37 @@ export function Emulator({ gameId, onExit }: EmulatorProps) {
             margin-top: env(safe-area-inset-top, 0px);
           }
           
+          /* Position controls tightly towards the bottom of the screen in portrait mode */
+          .ctrl-bottom {
+            bottom: 20px !important;
+            padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+          }
+          
+          .ctrl-bottom-left {
+            bottom: 60px !important;
+            left: 20px !important;
+          }
+          
+          .ctrl-bottom-right {
+            bottom: 60px !important;
+            right: 20px !important;
+          }
+          
           /* Move shoulders nicely above Dpad/AB to be reachable in vertical mode */
           .ctrl-top-left {
-            top: auto;
-            bottom: 230px;
-            left: 24px;
+            top: auto !important;
+            bottom: 195px !important;
+            left: 20px !important;
           }
           .ctrl-top-right {
-            top: auto;
-            bottom: 230px;
-            right: 24px;
+            top: auto !important;
+            bottom: 195px !important;
+            right: 20px !important;
+          }
+
+          .ab-wrapper {
+            width: 170px !important;
+            height: 170px !important;
           }
         }
 
