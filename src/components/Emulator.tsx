@@ -43,11 +43,7 @@ export function Emulator({ gameId, onExit }: EmulatorProps) {
 
   const handleStickMove = (x: number, y: number) => {
     if (!engineRef.current) return;
-    
-    // x and y are between -1 and 1
     const threshold = 0.3;
-    
-    // Map thumbstick movement to D-pad
     if (x < -threshold) { engineRef.current.pressButton('left'); engineRef.current.releaseButton('right'); }
     else if (x > threshold) { engineRef.current.pressButton('right'); engineRef.current.releaseButton('left'); }
     else { engineRef.current.releaseButton('left'); engineRef.current.releaseButton('right'); }
@@ -65,32 +61,14 @@ export function Emulator({ gameId, onExit }: EmulatorProps) {
   const btnPress = (btn: string) => engineRef.current?.pressButton(btn);
   const btnRelease = (btn: string) => engineRef.current?.releaseButton(btn);
 
-  const [controlsVisible, setControlsVisible] = useState(true);
-  const hideTimeoutRef = useRef<number | null>(null);
-
-  const resetHideTimer = () => {
-    setControlsVisible(true);
-    if (hideTimeoutRef.current) window.clearTimeout(hideTimeoutRef.current);
-    hideTimeoutRef.current = window.setTimeout(() => {
-      setControlsVisible(false);
-    }, 2500);
-  };
-
-  useEffect(() => {
-    resetHideTimer();
-    return () => {
-      if (hideTimeoutRef.current) window.clearTimeout(hideTimeoutRef.current);
-    }
-  }, []);
-
-  const handlePointerDown = () => resetHideTimer();
-  const handlePointerMove = () => resetHideTimer();
-
   return (
     <div className="emulator-container">
       <style>{`
+        /* Force app root background */
+        body { background-color: #000; overflow: hidden; }
+        
         .emulator-container {
-          position: absolute;
+          position: fixed;
           top: 0; left: 0; right: 0; bottom: 0;
           background-color: #000;
           display: flex;
@@ -99,85 +77,34 @@ export function Emulator({ gameId, onExit }: EmulatorProps) {
           touch-action: none;
           user-select: none;
           -webkit-user-select: none;
-          height: 100dvh;
-          width: 100dvw;
+          z-index: 9999;
         }
+
         .game-screen-area {
           position: relative;
           z-index: 1;
           width: 100%;
-          height: 100%;
+          flex: 1;
           display: flex;
           justify-content: center;
           align-items: center;
+          background-color: #000;
         }
+
         .controls-area {
           position: absolute;
           z-index: 2;
-          top: 0; left: 0; width: 100%; height: 100%;
+          top: 0; left: 0; right: 0; bottom: 0;
           pointer-events: none;
         }
-        .hideable-controls {
-          transition: opacity 0.5s ease;
-        }
-        
-        .ab-wrapper {
-          position: relative;
-          width: 160px;
-          height: 160px;
-        }
-        .b-btn-touch, .a-btn-touch {
-          position: absolute;
-          width: 80px;
-          height: 80px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          pointer-events: auto;
-        }
-        .b-btn-touch { left: 0; bottom: 0; }
-        .a-btn-touch { right: 0; top: 0; }
-        
-        .btn-visual-round {
-          width: 56px;
-          height: 56px;
-          border-radius: 28px;
-          border: 1px solid rgba(150, 150, 150, 0.4);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .btn-visual-shoulder {
-          width: 80px;
-          height: 32px;
-          border-radius: 16px;
-          border: 1px solid rgba(150, 150, 150, 0.4);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .shoulder-touch {
-          padding: 16px;
-          margin: -16px;
-          pointer-events: auto;
-        }
-
-        .ctrl-top-left { position: absolute; top: 16px; left: 16px; pointer-events: auto; }
-        .ctrl-top-right { position: absolute; top: 16px; right: 16px; pointer-events: auto; }
-        .ctrl-bottom-left { position: absolute; bottom: 32px; left: 32px; pointer-events: auto; }
-        .ctrl-bottom-startselect { position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%); display: flex; gap: 40px; align-items: flex-end; pointer-events: auto; }
-        .ctrl-bottom-exit { position: absolute; top: 16px; left: 50%; transform: translateX(-50%); display: flex; align-items: flex-end; pointer-events: auto; }
-        .ctrl-bottom-right { position: absolute; bottom: 32px; right: 96px; pointer-events: auto; }
 
         @media (orientation: portrait) {
           .game-screen-area {
             flex: none;
             width: 100%;
-            height: 66vw;
+            height: auto;
+            aspect-ratio: 3/2;
             margin-top: env(safe-area-inset-top, 0px);
-            background-color: #000;
           }
           .controls-area {
             position: relative;
@@ -185,115 +112,166 @@ export function Emulator({ gameId, onExit }: EmulatorProps) {
             width: 100%;
             background-color: #000;
           }
-          .ctrl-top-left { top: 16px; left: 16px; }
-          .ctrl-top-right { top: 16px; right: 16px; }
-          .ctrl-bottom-left { bottom: 80px; left: 32px; opacity: 1 !important; }
-          .ctrl-bottom-right { bottom: 80px; right: 24px; opacity: 1 !important; }
-          .ctrl-bottom-startselect { bottom: 80px; gap: 48px; }
-          .ctrl-bottom-exit { bottom: 24px; top: unset; }
-          
-          .ab-wrapper {
-            width: 180px;
-            height: 180px;
-          }
-          .a-btn-touch { right: -16px; top: -16px; }
+        }
+
+        /* Touch Interaction & Animation */
+        .touch-area { pointer-events: auto; }
+        .anim-press { transition: transform 0.1s ease, background-color 0.1s ease; }
+        .touch-area:active .anim-press { 
+          transform: scale(0.85); 
+          background-color: rgba(255, 255, 255, 0.1); 
+        }
+
+        /* Hierarchy Colors */
+        .primary-btn { border: 1px solid rgba(255, 255, 255, 0.5); }
+        .primary-btn span { color: rgba(255, 255, 255, 0.6); }
+
+        /* Secondary buttons are significantly greyer */
+        .secondary-btn { border: 1px solid rgba(255, 255, 255, 0.15); }
+        .secondary-btn span { color: rgba(255, 255, 255, 0.25); }
+        .secondary-btn svg { stroke: rgba(255, 255, 255, 0.25); }
+
+        /* Shapes */
+        .btn-shoulder { width: 80px; height: 32px; border-radius: 16px; display: flex; align-items: center; justify-content: center; }
+        .btn-shoulder span { font-size: 14px; font-weight: bold; }
+        .touch-area-shoulder { padding: 16px; margin: -16px; }
+
+        .btn-round-large { width: 56px; height: 56px; border-radius: 28px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; }
+        .touch-area-round { width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; position: absolute; }
+        .b-btn-pos { left: 0; bottom: 0; }
+        .a-btn-pos { right: 0; top: 0; }
+
+        .btn-pill { width: 64px; height: 26px; border-radius: 13px; display: flex; align-items: center; justify-content: center; }
+        .btn-pill span { font-size: 9px; font-weight: bold; letter-spacing: 0.5px; }
+
+        .btn-round-small { width: 34px; height: 34px; border-radius: 17px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+
+        /* Positions */
+        .ctrl-top-left { position: absolute; top: 16px; left: 16px; }
+        .ctrl-top-right { position: absolute; top: 16px; right: 16px; }
+        
+        .ctrl-bottom {
+          position: absolute;
+          bottom: 16px;
+          left: 50%;
+          transform: translateX(-50%);
+          display: flex;
+          gap: 24px;
+          align-items: center;
+          padding-bottom: env(safe-area-inset-bottom, 0px);
+        }
+
+        .ctrl-bottom-left { position: absolute; bottom: 80px; left: 24px; pointer-events: auto; }
+        .ctrl-bottom-right { position: absolute; bottom: 80px; right: 24px; }
+        
+        .ab-wrapper { position: relative; width: 140px; height: 140px; }
+
+        @media (orientation: portrait) {
+          .ab-wrapper { width: 160px; height: 160px; } /* More distance between A and B */
+        }
+        @media (orientation: landscape) {
+          .ctrl-bottom-left { bottom: 48px; left: 48px; }
+          .ctrl-bottom-right { bottom: 48px; right: 96px; }
         }
       `}</style>
       
       <div className="game-screen-area">
-        <canvas ref={canvasRef} style={styles.canvas} />
+        <canvas ref={canvasRef} style={{ width: '100%', height: '100%', objectFit: 'contain', imageRendering: 'pixelated' as any }} />
       </div>
 
-      {loading && <div style={styles.loading}>Loading...</div>}
+      {loading && <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', color: '#E7DFC6', fontSize: '24px', zIndex: 100, fontWeight: 'bold' }}>Loading...</div>}
 
       {!loading && (
         <div className="controls-area">
           
-          {/* Top Left: L */}
-          <div className="ctrl-top-left hideable-controls" style={{ opacity: controlsVisible ? 1 : 0 }} onTouchStart={handlePointerDown} onTouchMove={handlePointerMove}>
+          <div className="ctrl-top-left">
             <div 
-              className="shoulder-touch"
+              className="touch-area touch-area-shoulder"
               onTouchStart={() => btnPress('l')}
               onTouchEnd={() => btnRelease('l')}
+              onTouchCancel={() => btnRelease('l')}
             >
-              <div style={styles.shoulderBtn} className="btn-visual-shoulder">
-                <span style={styles.outlinedText}>L</span>
+              <div className="btn-shoulder secondary-btn anim-press">
+                <span>L</span>
               </div>
             </div>
           </div>
 
-          {/* Top Right: R */}
-          <div className="ctrl-top-right hideable-controls" style={{ opacity: controlsVisible ? 1 : 0 }} onTouchStart={handlePointerDown} onTouchMove={handlePointerMove}>
+          <div className="ctrl-top-right">
             <div 
-              className="shoulder-touch"
+              className="touch-area touch-area-shoulder"
               onTouchStart={() => btnPress('r')}
               onTouchEnd={() => btnRelease('r')}
+              onTouchCancel={() => btnRelease('r')}
             >
-              <div style={styles.shoulderBtn} className="btn-visual-shoulder">
-                <span style={styles.outlinedText}>R</span>
+              <div className="btn-shoulder secondary-btn anim-press">
+                <span>R</span>
               </div>
             </div>
           </div>
 
-          {/* Bottom Left: Thumbstick */}
-          <div className="ctrl-bottom-left" onTouchStart={handlePointerDown} onTouchMove={handlePointerMove}>
+          <div className="ctrl-bottom-left">
             <Thumbstick onMove={handleStickMove} onRelease={handleStickRelease} />
           </div>
 
-          {/* Bottom Center: Select, Start */}
-          <div className="ctrl-bottom-startselect hideable-controls" style={{ opacity: controlsVisible ? 1 : 0 }} onTouchStart={handlePointerDown} onTouchMove={handlePointerMove}>
-            <div style={styles.pillContainer}>
-              <div 
-                style={styles.pillBtn}
-                onTouchStart={() => btnPress('select')}
-                onTouchEnd={() => btnRelease('select')}
-              ></div>
-              <span style={styles.outlinedTextSmall}>SELECT</span>
+          <div className="ctrl-bottom">
+            <div 
+              className="touch-area" 
+              style={{ padding: '8px' }}
+              onTouchStart={() => btnPress('select')} 
+              onTouchEnd={() => btnRelease('select')} 
+              onTouchCancel={() => btnRelease('select')}
+            >
+              <div className="btn-pill secondary-btn anim-press">
+                <span>SELECT</span>
+              </div>
             </div>
 
-            <div style={styles.pillContainer}>
-              <div 
-                style={styles.pillBtn}
-                onTouchStart={() => btnPress('start')}
-                onTouchEnd={() => btnRelease('start')}
-              ></div>
-              <span style={styles.outlinedTextSmall}>START</span>
-            </div>
-          </div>
-
-          <div className="ctrl-bottom-exit hideable-controls" style={{ opacity: controlsVisible ? 1 : 0 }} onTouchStart={handlePointerDown} onTouchMove={handlePointerMove}>
-            <div style={styles.pillContainer}>
-              <button 
-                style={styles.roundSmallBtn}
-                onClick={onExit}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <div 
+              className="touch-area" 
+              style={{ padding: '8px' }}
+              onTouchStart={(e) => { e.preventDefault(); onExit(); }}
+            >
+              <div className="btn-round-small secondary-btn anim-press">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M19 12H5M12 19l-7-7 7-7" />
                 </svg>
-              </button>
-              <span style={styles.outlinedTextSmall}>EXIT</span>
+              </div>
+            </div>
+
+            <div 
+              className="touch-area" 
+              style={{ padding: '8px' }}
+              onTouchStart={() => btnPress('start')} 
+              onTouchEnd={() => btnRelease('start')} 
+              onTouchCancel={() => btnRelease('start')}
+            >
+              <div className="btn-pill secondary-btn anim-press">
+                <span>START</span>
+              </div>
             </div>
           </div>
 
-          {/* Bottom Right: A/B */}
-          <div className="ctrl-bottom-right" onTouchStart={handlePointerDown} onTouchMove={handlePointerMove}>
+          <div className="ctrl-bottom-right">
             <div className="ab-wrapper">
               <div 
-                className="b-btn-touch"
+                className="touch-area touch-area-round b-btn-pos"
                 onTouchStart={() => btnPress('b')}
                 onTouchEnd={() => btnRelease('b')}
+                onTouchCancel={() => btnRelease('b')}
               >
-                <div style={styles.bBtn} className="btn-visual-round">
-                  <span style={styles.outlinedTextLarge}>B</span>
+                <div className="btn-round-large primary-btn anim-press">
+                  <span>B</span>
                 </div>
               </div>
               <div 
-                className="a-btn-touch"
+                className="touch-area touch-area-round a-btn-pos"
                 onTouchStart={() => btnPress('a')}
                 onTouchEnd={() => btnRelease('a')}
+                onTouchCancel={() => btnRelease('a')}
               >
-                <div style={styles.aBtn} className="btn-visual-round">
-                  <span style={styles.outlinedTextLarge}>A</span>
+                <div className="btn-round-large primary-btn anim-press">
+                  <span>A</span>
                 </div>
               </div>
             </div>
@@ -359,133 +337,24 @@ function Thumbstick({ onMove, onRelease }: { onMove: (x: number, y: number) => v
   return (
     <div 
       ref={baseRef}
-      style={styles.stickBase}
+      style={{ position: 'relative', width: '120px', height: '120px' }}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
       onTouchCancel={handleTouchEnd}
     >
-      <div style={styles.stickOuterRing}></div>
-      <div style={styles.stickInnerTrack}></div>
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: '60px', border: '1px solid rgba(255, 255, 255, 0.5)' }}></div>
       <div 
         ref={knobRef}
         style={{
-          ...styles.stickKnob,
+          position: 'absolute', top: '50%', left: '50%', width: '40px', height: '40px',
+          borderRadius: '20px', border: '1px solid rgba(255, 255, 255, 0.5)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
           transform: `translate(-50%, -50%)`
         }}
       >
-        <div style={styles.stickKnobInner}></div>
+        <div style={{ width: '8px', height: '8px', borderRadius: '4px', backgroundColor: 'rgba(255, 255, 255, 0.6)' }}></div>
       </div>
     </div>
   );
 }
-
-const styles: Record<string, React.CSSProperties> = {
-  loading: {
-    position: 'absolute',
-    top: '50%', left: '50%',
-    transform: 'translate(-50%, -50%)',
-    color: '#E7DFC6',
-    fontSize: '24px',
-    zIndex: 100,
-    fontWeight: 'bold',
-  },
-  canvas: {
-    width: '100%',
-    height: '100%',
-    objectFit: 'contain',
-    imageRendering: 'pixelated' as any,
-  },
-  shoulderBtn: {
-    backgroundColor: 'transparent',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  abWrapper: {
-    position: 'relative',
-    width: '120px',
-    height: '120px',
-  },
-  bBtn: {
-    backgroundColor: 'transparent',
-  },
-  aBtn: {
-    backgroundColor: 'transparent',
-  },
-  pillContainer: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: '8px',
-  },
-  pillBtn: {
-    width: '48px',
-    height: '16px',
-    backgroundColor: 'transparent',
-    borderRadius: '8px',
-    border: '1px solid rgba(150, 150, 150, 0.4)',
-  },
-  roundSmallBtn: {
-    width: '24px',
-    height: '24px',
-    backgroundColor: 'transparent',
-    borderRadius: '12px',
-    border: '1px solid rgba(150, 150, 150, 0.4)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    cursor: 'pointer',
-    padding: 0,
-  },
-  outlinedText: {
-    color: 'rgba(255, 255, 255, 0.5)',
-    fontSize: '14px',
-    fontWeight: 'bold',
-  },
-  outlinedTextSmall: {
-    color: 'rgba(255, 255, 255, 0.5)',
-    fontSize: '10px',
-    fontWeight: 'bold',
-    letterSpacing: '1px',
-  },
-  outlinedTextLarge: {
-    color: 'rgba(255, 255, 255, 0.5)',
-    fontSize: '24px',
-    fontWeight: 'bold',
-  },
-  stickBase: {
-    position: 'relative',
-    width: '120px',
-    height: '120px',
-  },
-  stickOuterRing: {
-    position: 'absolute',
-    top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: 'transparent',
-    borderRadius: '60px',
-    border: '1px solid rgba(150, 150, 150, 0.4)',
-  },
-  stickInnerTrack: {
-    display: 'none',
-  },
-  stickKnob: {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    width: '40px',
-    height: '40px',
-    backgroundColor: 'transparent',
-    borderRadius: '20px',
-    border: '1px solid rgba(150, 150, 150, 0.4)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  stickKnobInner: {
-    width: '8px',
-    height: '8px',
-    borderRadius: '4px',
-    backgroundColor: 'rgba(255, 255, 255, 0.6)',
-  },
-};
