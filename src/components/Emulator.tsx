@@ -32,24 +32,8 @@ export function Emulator({ gameId, onExit }: EmulatorProps) {
     };
     init();
 
-    const handleResize = () => {
-      setTimeout(() => {
-        if (engineRef.current?.nostalgistInstance && canvasRef.current) {
-          try {
-            const rect = canvasRef.current.getBoundingClientRect();
-            engineRef.current.nostalgistInstance.resize({ width: rect.width, height: rect.height });
-          } catch(e) {}
-        }
-      }, 300);
-    };
-
-    window.addEventListener('resize', handleResize);
-    window.addEventListener('orientationchange', handleResize);
-
     return () => {
       active = false;
-      window.removeEventListener('resize', handleResize);
-      window.removeEventListener('orientationchange', handleResize);
       if (engineRef.current) {
         engineRef.current.exit();
         engineRef.current = null;
@@ -135,9 +119,9 @@ export function Emulator({ gameId, onExit }: EmulatorProps) {
         
         .ctrl-top-left { position: absolute; top: 16px; left: 16px; pointer-events: auto; }
         .ctrl-top-right { position: absolute; top: 16px; right: 16px; pointer-events: auto; }
-        .ctrl-bottom-left { position: absolute; bottom: 16px; left: 48px; pointer-events: auto; }
-        .ctrl-bottom-center { position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); display: flex; gap: 24px; align-items: flex-end; pointer-events: auto; }
-        .ctrl-bottom-right { position: absolute; bottom: 16px; right: 64px; pointer-events: auto; }
+        .ctrl-bottom-left { position: absolute; bottom: 32px; left: 32px; pointer-events: auto; }
+        .ctrl-bottom-center { position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%); display: flex; gap: 24px; align-items: flex-end; pointer-events: auto; }
+        .ctrl-bottom-right { position: absolute; bottom: 32px; right: 96px; pointer-events: auto; }
 
         @media (orientation: portrait) {
           .game-screen-area {
@@ -146,17 +130,19 @@ export function Emulator({ gameId, onExit }: EmulatorProps) {
             width: 100vw;
             aspect-ratio: 3/2;
             margin-top: env(safe-area-inset-top, 0px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            z-index: 10;
           }
           .controls-area {
             position: relative;
             flex: 1;
             width: 100%;
           }
-          .ctrl-top-left { top: 20px; left: 20px; }
-          .ctrl-top-right { top: 20px; right: 20px; }
-          .ctrl-bottom-left { bottom: 80px; left: 32px; }
-          .ctrl-bottom-center { bottom: 30px; }
-          .ctrl-bottom-right { bottom: 80px; right: 32px; }
+          .ctrl-top-left { top: 16px; left: 16px; }
+          .ctrl-top-right { top: 16px; right: 16px; }
+          .ctrl-bottom-left { bottom: 80px; left: 32px; opacity: 1 !important; }
+          .ctrl-bottom-right { bottom: 80px; right: 40px; opacity: 1 !important; }
+          .ctrl-bottom-center { bottom: unset; top: 32px; gap: 40px; }
         }
       `}</style>
       
@@ -169,8 +155,19 @@ export function Emulator({ gameId, onExit }: EmulatorProps) {
       {!loading && (
         <div className="controls-area">
           
-          {/* Top Left: L */}
-          <div className="ctrl-top-left hideable-controls" style={{ opacity: controlsVisible ? 1 : 0 }} onTouchStart={handlePointerDown} onTouchMove={handlePointerMove}>
+          {/* Top Left: Back & L */}
+          <div className="ctrl-top-left hideable-controls" style={{ opacity: controlsVisible ? 1 : 0, display: 'flex', gap: '24px', alignItems: 'center' }} onTouchStart={handlePointerDown} onTouchMove={handlePointerMove}>
+            <div style={styles.pillContainer}>
+              <button 
+                style={styles.roundSmallBtn}
+                onClick={onExit}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M19 12H5M12 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <span style={styles.outlinedTextSmall}>EXIT</span>
+            </div>
             <div 
               style={styles.shoulderBtn}
               onTouchStart={() => btnPress('l')}
@@ -196,20 +193,8 @@ export function Emulator({ gameId, onExit }: EmulatorProps) {
             <Thumbstick onMove={handleStickMove} onRelease={handleStickRelease} />
           </div>
 
-          {/* Bottom Center: Select, Start, Back */}
+          {/* Bottom Center: Select, Start */}
           <div className="ctrl-bottom-center hideable-controls" style={{ opacity: controlsVisible ? 1 : 0 }} onTouchStart={handlePointerDown} onTouchMove={handlePointerMove}>
-            <div style={styles.pillContainer}>
-              <button 
-                style={styles.roundSmallBtn}
-                onClick={onExit}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M19 12H5M12 19l-7-7 7-7" />
-                </svg>
-              </button>
-              <span style={styles.outlinedTextSmall}>BACK</span>
-            </div>
-            
             <div style={styles.pillContainer}>
               <div 
                 style={styles.pillBtn}
@@ -352,7 +337,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    border: '1px solid rgba(255, 255, 255, 0.4)',
+    border: 'none',
   },
   abWrapper: {
     position: 'relative',
@@ -367,7 +352,7 @@ const styles: Record<string, React.CSSProperties> = {
     height: '56px',
     backgroundColor: 'transparent',
     borderRadius: '28px',
-    border: '1px solid rgba(255, 255, 255, 0.4)',
+    border: 'none',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -380,7 +365,7 @@ const styles: Record<string, React.CSSProperties> = {
     height: '56px',
     backgroundColor: 'transparent',
     borderRadius: '28px',
-    border: '1px solid rgba(255, 255, 255, 0.4)',
+    border: 'none',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -396,14 +381,14 @@ const styles: Record<string, React.CSSProperties> = {
     height: '16px',
     backgroundColor: 'transparent',
     borderRadius: '8px',
-    border: '1px solid rgba(255, 255, 255, 0.4)',
+    border: 'none',
   },
   roundSmallBtn: {
     width: '24px',
     height: '24px',
     backgroundColor: 'transparent',
     borderRadius: '12px',
-    border: '1px solid rgba(255, 255, 255, 0.4)',
+    border: 'none',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
