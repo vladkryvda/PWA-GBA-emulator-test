@@ -10,6 +10,36 @@ export function Emulator({ gameId, onExit }: EmulatorProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<EmulatorEngine | null>(null);
   const [loading, setLoading] = useState(true);
+  const [orientation, setOrientation] = useState<'portrait' | 'landscape'>(
+    window.innerHeight > window.innerWidth ? 'portrait' : 'landscape'
+  );
+
+  useEffect(() => {
+    const handleResize = () => {
+      const currentOrientation = window.innerHeight > window.innerWidth ? 'portrait' : 'landscape';
+      setOrientation(currentOrientation);
+      
+      // Dispatch multiple window resize events so retroarch correctly adapts WebGL sizes
+      setTimeout(() => {
+        window.dispatchEvent(new Event('resize'));
+      }, 50);
+      setTimeout(() => {
+        window.dispatchEvent(new Event('resize'));
+      }, 150);
+      setTimeout(() => {
+        window.dispatchEvent(new Event('resize'));
+      }, 350);
+    };
+
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleResize);
+    handleResize();
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
+    };
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -73,6 +103,8 @@ export function Emulator({ gameId, onExit }: EmulatorProps) {
           background-color: #000;
           display: flex;
           flex-direction: column;
+          justify-content: center;
+          align-items: center;
           overflow: hidden;
           touch-action: none;
           user-select: none;
@@ -91,6 +123,15 @@ export function Emulator({ gameId, onExit }: EmulatorProps) {
           background-color: #000;
         }
 
+        canvas, .game-screen-area canvas {
+          border: none !important;
+          outline: none !important;
+          box-shadow: none !important;
+          user-select: none;
+          -webkit-user-select: none;
+          display: block;
+        }
+
         .controls-area {
           position: absolute;
           z-index: 2;
@@ -99,6 +140,9 @@ export function Emulator({ gameId, onExit }: EmulatorProps) {
         }
 
         @media (orientation: portrait) {
+          .emulator-container {
+            justify-content: flex-start;
+          }
           .game-screen-area {
             flex: none;
             width: 100%;
@@ -106,30 +150,44 @@ export function Emulator({ gameId, onExit }: EmulatorProps) {
             aspect-ratio: 3/2;
             margin-top: env(safe-area-inset-top, 0px);
           }
-          .controls-area {
-            position: relative;
-            flex: 1;
-            width: 100%;
-            background-color: #000;
+          
+          /* Move shoulders nicely above Dpad/AB to be reachable in vertical mode */
+          .ctrl-top-left {
+            top: auto;
+            bottom: 230px;
+            left: 24px;
+          }
+          .ctrl-top-right {
+            top: auto;
+            bottom: 230px;
+            right: 24px;
           }
         }
 
         /* Touch Interaction & Animation */
         .touch-area { pointer-events: auto; }
-        .anim-press { transition: transform 0.1s ease, background-color 0.1s ease; }
+        .anim-press { transition: transform 0.1s ease, background-color 0.1s ease, border-color 0.1s ease; }
+        
         .touch-area:active .anim-press { 
           transform: scale(0.85); 
-          background-color: rgba(255, 255, 255, 0.1); 
+          background-color: rgba(255, 255, 255, 0.15); 
+          border-color: rgba(255, 255, 255, 0.7);
+        }
+        .touch-area:active .anim-press span {
+          color: rgba(255, 255, 255, 1);
+        }
+        .touch-area:active .anim-press svg {
+          stroke: rgba(255, 255, 255, 1);
         }
 
         /* Hierarchy Colors */
-        .primary-btn { border: 1px solid rgba(255, 255, 255, 0.5); }
-        .primary-btn span { color: rgba(255, 255, 255, 0.6); }
+        .primary-btn { border: 1px solid rgba(255, 255, 255, 0.45); }
+        .primary-btn span { color: rgba(255, 255, 255, 0.75); }
 
         /* Secondary buttons are significantly greyer */
         .secondary-btn { border: 1px solid rgba(255, 255, 255, 0.15); }
-        .secondary-btn span { color: rgba(255, 255, 255, 0.25); }
-        .secondary-btn svg { stroke: rgba(255, 255, 255, 0.25); }
+        .secondary-btn span { color: rgba(255, 255, 255, 0.35); }
+        .secondary-btn svg { stroke: rgba(255, 255, 255, 0.35); }
 
         /* Shapes */
         .btn-shoulder { width: 80px; height: 32px; border-radius: 16px; display: flex; align-items: center; justify-content: center; }
@@ -137,12 +195,12 @@ export function Emulator({ gameId, onExit }: EmulatorProps) {
         .touch-area-shoulder { padding: 16px; margin: -16px; }
 
         .btn-round-large { width: 56px; height: 56px; border-radius: 28px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; }
-        .touch-area-round { width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; position: absolute; }
+        .touch-area-round { width: 90px; height: 90px; display: flex; align-items: center; justify-content: center; position: absolute; }
         .b-btn-pos { left: 0; bottom: 0; }
         .a-btn-pos { right: 0; top: 0; }
 
-        .btn-pill { width: 64px; height: 26px; border-radius: 13px; display: flex; align-items: center; justify-content: center; }
-        .btn-pill span { font-size: 9px; font-weight: bold; letter-spacing: 0.5px; }
+        .btn-pill { width: 68px; height: 26px; border-radius: 13px; display: flex; align-items: center; justify-content: center; }
+        .btn-pill span { font-size: 8px; font-weight: bold; letter-spacing: 0.5px; }
 
         .btn-round-small { width: 34px; height: 34px; border-radius: 17px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
 
@@ -152,7 +210,7 @@ export function Emulator({ gameId, onExit }: EmulatorProps) {
         
         .ctrl-bottom {
           position: absolute;
-          bottom: 16px;
+          bottom: 12px;
           left: 50%;
           transform: translateX(-50%);
           display: flex;
@@ -161,13 +219,13 @@ export function Emulator({ gameId, onExit }: EmulatorProps) {
           padding-bottom: env(safe-area-inset-bottom, 0px);
         }
 
-        .ctrl-bottom-left { position: absolute; bottom: 80px; left: 24px; pointer-events: auto; }
-        .ctrl-bottom-right { position: absolute; bottom: 80px; right: 24px; }
+        .ctrl-bottom-left { position: absolute; bottom: 85px; left: 24px; pointer-events: auto; }
+        .ctrl-bottom-right { position: absolute; bottom: 85px; right: 24px; }
         
         .ab-wrapper { position: relative; width: 140px; height: 140px; }
 
         @media (orientation: portrait) {
-          .ab-wrapper { width: 160px; height: 160px; } /* More distance between A and B */
+          .ab-wrapper { width: 170px; height: 170px; } /* Clean separation */
         }
         @media (orientation: landscape) {
           .ctrl-bottom-left { bottom: 48px; left: 48px; }
@@ -233,7 +291,7 @@ export function Emulator({ gameId, onExit }: EmulatorProps) {
               onTouchStart={(e) => { e.preventDefault(); onExit(); }}
             >
               <div className="btn-round-small secondary-btn anim-press">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M19 12H5M12 19l-7-7 7-7" />
                 </svg>
               </div>
