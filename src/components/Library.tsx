@@ -136,9 +136,6 @@ export function Library({ onLaunchGame }: LibraryProps) {
         <div style={styles.grid}>
           {games.map(game => (
             <div key={game.id} style={styles.card} onClick={() => onLaunchGame(game.id)}>
-              <div style={styles.coverPlaceholder}>
-                {game.title.charAt(0).toUpperCase()}
-              </div>
               <div style={styles.cardInfo}>
                 <h3 style={styles.cardTitle}>{game.title}</h3>
                 <p style={styles.cardDetail}>Played: {formatTime(game.totalPlayTimeMs)}</p>
@@ -214,16 +211,6 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: 'pointer',
     display: 'flex',
     flexDirection: 'column',
-  },
-  coverPlaceholder: {
-    aspectRatio: '1',
-    backgroundColor: 'var(--accent-primary)',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    fontSize: '48px',
-    color: '#fff',
-    fontWeight: 'bold',
   },
   cardInfo: {
     padding: '16px',

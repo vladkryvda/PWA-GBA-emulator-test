@@ -14,10 +14,10 @@ export default defineConfig(() => {
           globPatterns: ['**/*.{js,css,html,ico,png,svg,wasm}'],
           runtimeCaching: [
             {
-              urlPattern: /^https:\/\/unpkg\.com\/.*/i,
+              urlPattern: /^https:\/\/(unpkg\.com|cdn\.jsdelivr\.net)\/.*/i,
               handler: 'CacheFirst',
               options: {
-                cacheName: 'unpkg-cache',
+                cacheName: 'cdn-cache',
                 expiration: {
                   maxEntries: 100,
                   maxAgeSeconds: 60 * 60 * 24 * 365

@@ -60,19 +60,96 @@ export function Emulator({ gameId, onExit }: EmulatorProps) {
   const btnPress = (btn: string) => engineRef.current?.pressButton(btn);
   const btnRelease = (btn: string) => engineRef.current?.releaseButton(btn);
 
+  const [controlsVisible, setControlsVisible] = useState(true);
+  const hideTimeoutRef = useRef<number | null>(null);
+
+  const resetHideTimer = () => {
+    setControlsVisible(true);
+    if (hideTimeoutRef.current) window.clearTimeout(hideTimeoutRef.current);
+    hideTimeoutRef.current = window.setTimeout(() => {
+      setControlsVisible(false);
+    }, 2500);
+  };
+
+  useEffect(() => {
+    resetHideTimer();
+    return () => {
+      if (hideTimeoutRef.current) window.clearTimeout(hideTimeoutRef.current);
+    }
+  }, []);
+
+  const handlePointerDown = () => resetHideTimer();
+  const handlePointerMove = () => resetHideTimer();
+
   return (
-    <div style={styles.container}>
-      <div style={styles.screenWrapper}>
+    <div className="emulator-container">
+      <style>{`
+        .emulator-container {
+          position: absolute;
+          top: 0; left: 0; right: 0; bottom: 0;
+          background-color: #000;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+          touch-action: none;
+          user-select: none;
+          -webkit-user-select: none;
+        }
+        .game-screen-area {
+          position: relative;
+          width: 100%;
+          height: 100%;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+        }
+        .controls-area {
+          position: absolute;
+          top: 0; left: 0; width: 100%; height: 100%;
+          pointer-events: none;
+        }
+        .hideable-controls {
+          transition: opacity 0.5s ease;
+        }
+        
+        .ctrl-top-left { position: absolute; top: 16px; left: 16px; pointer-events: auto; }
+        .ctrl-top-right { position: absolute; top: 16px; right: 16px; pointer-events: auto; }
+        .ctrl-bottom-left { position: absolute; bottom: 16px; left: 16px; pointer-events: auto; }
+        .ctrl-bottom-center { position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); display: flex; gap: 24px; align-items: flex-end; pointer-events: auto; }
+        .ctrl-bottom-right { position: absolute; bottom: 16px; right: 16px; pointer-events: auto; }
+
+        @media (orientation: portrait) {
+          .game-screen-area {
+            height: auto;
+            flex: none;
+            width: 100vw;
+            aspect-ratio: 3/2;
+            margin-top: calc(env(safe-area-inset-top, 40px) + 20px);
+          }
+          .controls-area {
+            position: relative;
+            flex: 1;
+            width: 100%;
+          }
+          .ctrl-top-left { top: 20px; left: 20px; }
+          .ctrl-top-right { top: 20px; right: 20px; }
+          .ctrl-bottom-left { bottom: 80px; left: 20px; }
+          .ctrl-bottom-center { bottom: 30px; }
+          .ctrl-bottom-right { bottom: 80px; right: 20px; }
+        }
+      `}</style>
+      
+      <div className="game-screen-area" onTouchStart={handlePointerDown} onTouchMove={handlePointerMove}>
         <canvas ref={canvasRef} style={styles.canvas} />
       </div>
 
       {loading && <div style={styles.loading}>Loading...</div>}
 
       {!loading && (
-        <div style={styles.controlsOverlay}>
+        <div className="controls-area" onTouchStart={handlePointerDown} onTouchMove={handlePointerMove}>
           
           {/* Top Left: L */}
-          <div style={styles.topLeft}>
+          <div className="ctrl-top-left hideable-controls" style={{ opacity: controlsVisible ? 1 : 0 }}>
             <div 
               style={styles.shoulderBtn}
               onTouchStart={() => btnPress('l')}
@@ -83,7 +160,7 @@ export function Emulator({ gameId, onExit }: EmulatorProps) {
           </div>
 
           {/* Top Right: R */}
-          <div style={styles.topRight}>
+          <div className="ctrl-top-right hideable-controls" style={{ opacity: controlsVisible ? 1 : 0 }}>
             <div 
               style={styles.shoulderBtn}
               onTouchStart={() => btnPress('r')}
@@ -94,12 +171,12 @@ export function Emulator({ gameId, onExit }: EmulatorProps) {
           </div>
 
           {/* Bottom Left: Thumbstick */}
-          <div style={styles.bottomLeft}>
+          <div className="ctrl-bottom-left">
             <Thumbstick onMove={handleStickMove} onRelease={handleStickRelease} />
           </div>
 
           {/* Bottom Center: Select, Start, Back */}
-          <div style={styles.bottomCenter}>
+          <div className="ctrl-bottom-center hideable-controls" style={{ opacity: controlsVisible ? 1 : 0 }}>
             <div style={styles.pillContainer}>
               <button 
                 style={styles.roundSmallBtn}
@@ -132,7 +209,7 @@ export function Emulator({ gameId, onExit }: EmulatorProps) {
           </div>
 
           {/* Bottom Right: A/B */}
-          <div style={styles.bottomRight}>
+          <div className="ctrl-bottom-right">
             <div style={styles.abWrapper}>
               <div 
                 style={styles.bBtn}
@@ -231,19 +308,6 @@ function Thumbstick({ onMove, onRelease }: { onMove: (x: number, y: number) => v
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  container: {
-    position: 'absolute',
-    top: 0, left: 0, width: '100%', height: '100%',
-    backgroundColor: '#000', // Black background for fullscreen game
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    overflow: 'hidden',
-    touchAction: 'none',
-    fontFamily: 'sans-serif',
-    userSelect: 'none',
-    WebkitUserSelect: 'none',
-  },
   loading: {
     position: 'absolute',
     top: '50%', left: '50%',
@@ -253,57 +317,11 @@ const styles: Record<string, React.CSSProperties> = {
     zIndex: 100,
     fontWeight: 'bold',
   },
-  screenWrapper: {
-    position: 'absolute',
-    top: 0, left: 0, right: 0, bottom: 0,
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   canvas: {
     width: '100%',
     height: '100%',
     objectFit: 'contain',
     imageRendering: 'pixelated' as any,
-  },
-  controlsOverlay: {
-    position: 'absolute',
-    top: 0, left: 0, width: '100%', height: '100%',
-    pointerEvents: 'none', // Let canvas clicks through where empty
-  },
-  topLeft: {
-    position: 'absolute',
-    top: '16px',
-    left: '16px',
-    pointerEvents: 'auto',
-  },
-  topRight: {
-    position: 'absolute',
-    top: '16px',
-    right: '16px',
-    pointerEvents: 'auto',
-  },
-  bottomLeft: {
-    position: 'absolute',
-    bottom: '16px',
-    left: '16px',
-    pointerEvents: 'auto',
-  },
-  bottomCenter: {
-    position: 'absolute',
-    bottom: '16px',
-    left: '50%',
-    transform: 'translateX(-50%)',
-    display: 'flex',
-    gap: '24px',
-    alignItems: 'flex-end',
-    pointerEvents: 'auto',
-  },
-  bottomRight: {
-    position: 'absolute',
-    bottom: '16px',
-    right: '16px',
-    pointerEvents: 'auto',
   },
   shoulderBtn: {
     width: '80px',

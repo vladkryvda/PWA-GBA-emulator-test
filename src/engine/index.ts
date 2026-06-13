@@ -15,7 +15,10 @@ export class EmulatorEngine {
     this.canvas = canvas;
     this.visibilityHandler = () => {
       if (document.hidden) {
+        if (this.nostalgistInstance) this.nostalgistInstance.pause();
         this.saveState('auto');
+      } else {
+        if (this.nostalgistInstance) this.nostalgistInstance.resume();
       }
     };
   }
