@@ -28,13 +28,14 @@ export class EmulatorEngine {
     const state = await SavesStorage.loadState(gameId, 'auto');
 
     // Mute initially until user interaction if needed, though Nostalgist handles this.
+    const romBlob = new Blob([romData], { type: 'application/octet-stream' });
+    const romFile = new File([romBlob], 'game.gba');
+
     this.nostalgistInstance = await Nostalgist.launch({
       core: 'mgba',
-      rom: romData,
+      rom: romFile,
       element: this.canvas,
       state: state || undefined,
-      resolveCoreJs: () => 'https://unpkg.com/nostalgist/dist/nostalgist.js', // Let SW cache this
-      // Or we let nostalgic use default resolvers which use jsdelivr/unpkg
     });
 
     this.sessionStartTime = Date.now();
@@ -72,14 +73,14 @@ export class EmulatorEngine {
   }
 
   async exit() {
-    if (this.gameId) {
+    if (this.gameId && this.sessionStartTime > 0) {
       await this.saveState('auto');
       const sessionDuration = Date.now() - this.sessionStartTime;
       const games = await LibraryStorage.getAllGames();
       const game = games.find(g => g.id === this.gameId);
       if (game) {
         await LibraryStorage.updateMetadata(this.gameId, {
-          totalPlayTimeMs: game.totalPlayTimeMs + sessionDuration
+          totalPlayTimeMs: (game.totalPlayTimeMs || 0) + sessionDuration
         });
       }
     }

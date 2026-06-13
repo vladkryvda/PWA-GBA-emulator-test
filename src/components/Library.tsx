@@ -12,6 +12,13 @@ export function Library({ onLaunchGame }: LibraryProps) {
 
   const loadGames = async () => {
     const allGames = await LibraryStorage.getAllGames();
+    // Repair invalid totalPlayTimeMs
+    for (const game of allGames) {
+      if (game.totalPlayTimeMs > 31536000000) { // Over 1 year is definitely a bug
+        await LibraryStorage.updateMetadata(game.id, { totalPlayTimeMs: 0 });
+        game.totalPlayTimeMs = 0;
+      }
+    }
     setGames(allGames);
   };
 
