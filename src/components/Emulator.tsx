@@ -8,6 +8,7 @@ interface EmulatorProps {
 
 export function Emulator({ gameId, onExit }: EmulatorProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const bgCanvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<EmulatorEngine | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -40,6 +41,30 @@ export function Emulator({ gameId, onExit }: EmulatorProps) {
       }
     };
   }, [gameId, onExit]);
+
+  useEffect(() => {
+    if (loading) return;
+    
+    let animId: number;
+    const bgCanvas = bgCanvasRef.current;
+    const fgCanvas = canvasRef.current;
+    if (!bgCanvas || !fgCanvas) return;
+
+    const ctx = bgCanvas.getContext('2d');
+    if (!ctx) return;
+    
+    // Low resolution for blur performance
+    bgCanvas.width = 120;
+    bgCanvas.height = 80;
+
+    const sync = () => {
+      ctx.drawImage(fgCanvas, 0, 0, bgCanvas.width, bgCanvas.height);
+      animId = requestAnimationFrame(sync);
+    };
+    sync();
+    
+    return () => cancelAnimationFrame(animId);
+  }, [loading]);
 
   const handleStickMove = (x: number, y: number) => {
     if (!engineRef.current) return;
@@ -100,8 +125,18 @@ export function Emulator({ gameId, onExit }: EmulatorProps) {
           user-select: none;
           -webkit-user-select: none;
         }
+        .ambilight-bg {
+          position: absolute;
+          top: 0; left: 0; width: 100%; height: 100%;
+          transform: scale(1.1);
+          filter: blur(80px) brightness(0.7) saturate(1.5);
+          z-index: 0;
+          opacity: 0.8;
+          pointer-events: none;
+        }
         .game-screen-area {
           position: relative;
+          z-index: 1;
           width: 100%;
           height: 100%;
           display: flex;
@@ -110,6 +145,7 @@ export function Emulator({ gameId, onExit }: EmulatorProps) {
         }
         .controls-area {
           position: absolute;
+          z-index: 2;
           top: 0; left: 0; width: 100%; height: 100%;
           pointer-events: none;
         }
@@ -130,8 +166,7 @@ export function Emulator({ gameId, onExit }: EmulatorProps) {
             width: 100vw;
             aspect-ratio: 3/2;
             margin-top: env(safe-area-inset-top, 0px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            z-index: 10;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
           }
           .controls-area {
             position: relative;
@@ -146,6 +181,8 @@ export function Emulator({ gameId, onExit }: EmulatorProps) {
         }
       `}</style>
       
+      <canvas ref={bgCanvasRef} className="ambilight-bg" />
+
       <div className="game-screen-area">
         <canvas ref={canvasRef} style={styles.canvas} />
       </div>
@@ -332,12 +369,14 @@ const styles: Record<string, React.CSSProperties> = {
   shoulderBtn: {
     width: '80px',
     height: '32px',
-    backgroundColor: 'transparent',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backdropFilter: 'blur(10px)',
     borderRadius: '16px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    border: 'none',
+    border: '1px solid rgba(255, 255, 255, 0.15)',
+    boxShadow: '0 4px 15px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1)',
   },
   abWrapper: {
     position: 'relative',
@@ -350,9 +389,11 @@ const styles: Record<string, React.CSSProperties> = {
     bottom: 0,
     width: '56px',
     height: '56px',
-    backgroundColor: 'transparent',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backdropFilter: 'blur(10px)',
     borderRadius: '28px',
-    border: 'none',
+    border: '1px solid rgba(255, 255, 255, 0.15)',
+    boxShadow: '0 4px 15px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -363,9 +404,11 @@ const styles: Record<string, React.CSSProperties> = {
     top: 0,
     width: '56px',
     height: '56px',
-    backgroundColor: 'transparent',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backdropFilter: 'blur(10px)',
     borderRadius: '28px',
-    border: 'none',
+    border: '1px solid rgba(255, 255, 255, 0.15)',
+    boxShadow: '0 4px 15px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -379,16 +422,20 @@ const styles: Record<string, React.CSSProperties> = {
   pillBtn: {
     width: '48px',
     height: '16px',
-    backgroundColor: 'transparent',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backdropFilter: 'blur(10px)',
     borderRadius: '8px',
-    border: 'none',
+    border: '1px solid rgba(255, 255, 255, 0.15)',
+    boxShadow: '0 4px 15px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1)',
   },
   roundSmallBtn: {
     width: '24px',
     height: '24px',
-    backgroundColor: 'transparent',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backdropFilter: 'blur(10px)',
     borderRadius: '12px',
-    border: 'none',
+    border: '1px solid rgba(255, 255, 255, 0.15)',
+    boxShadow: '0 4px 15px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -396,18 +443,18 @@ const styles: Record<string, React.CSSProperties> = {
     padding: 0,
   },
   outlinedText: {
-    color: 'rgba(255, 255, 255, 0.5)',
+    color: 'rgba(255, 255, 255, 0.8)',
     fontSize: '14px',
     fontWeight: 'bold',
   },
   outlinedTextSmall: {
-    color: 'rgba(255, 255, 255, 0.5)',
+    color: 'rgba(255, 255, 255, 0.8)',
     fontSize: '10px',
     fontWeight: 'bold',
     letterSpacing: '1px',
   },
   outlinedTextLarge: {
-    color: 'rgba(255, 255, 255, 0.5)',
+    color: 'rgba(255, 255, 255, 0.8)',
     fontSize: '24px',
     fontWeight: 'bold',
   },
@@ -419,9 +466,11 @@ const styles: Record<string, React.CSSProperties> = {
   stickOuterRing: {
     position: 'absolute',
     top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: 'transparent',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backdropFilter: 'blur(10px)',
     borderRadius: '60px',
-    border: '1px solid rgba(255, 255, 255, 0.4)',
+    border: '1px solid rgba(255, 255, 255, 0.15)',
+    boxShadow: '0 4px 15px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1)',
   },
   stickInnerTrack: {
     display: 'none',
@@ -432,9 +481,11 @@ const styles: Record<string, React.CSSProperties> = {
     left: '50%',
     width: '40px',
     height: '40px',
-    backgroundColor: 'transparent',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backdropFilter: 'blur(10px)',
     borderRadius: '20px',
-    border: '1px solid rgba(255, 255, 255, 0.4)',
+    border: '1px solid rgba(255, 255, 255, 0.3)',
+    boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -443,6 +494,6 @@ const styles: Record<string, React.CSSProperties> = {
     width: '8px',
     height: '8px',
     borderRadius: '4px',
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    backgroundColor: 'rgba(255, 255, 255, 0.6)',
   },
 };
