@@ -13,9 +13,18 @@ const generateId = (str: string) => {
 export class LibraryStorage {
   static async addGame(file: File): Promise<string> {
     const id = generateId(file.name);
-    const title = file.name.replace(/\.gba$/i, '').trim();
     const arrayBuffer = await file.arrayBuffer();
     const data = new Uint8Array(arrayBuffer);
+
+    let internalTitle = '';
+    if (data.length > 0xAB) {
+      for (let i = 0xA0; i <= 0xAB; i++) {
+        if (data[i] === 0) break;
+        internalTitle += String.fromCharCode(data[i]);
+      }
+    }
+    internalTitle = internalTitle.trim();
+    const title = internalTitle || file.name.replace(/\.gba$/i, '').trim();
 
     const db = await getDB();
     const tx = db.transaction(['metadata', 'roms'], 'readwrite');

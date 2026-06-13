@@ -51,7 +51,7 @@ let dbPromise: Promise<IDBPDatabase<AuroraDB>> | null = null;
 
 export function getDB() {
   if (!dbPromise) {
-    dbPromise = openDB<AuroraDB>('aurora-gba-db', 1, {
+    dbPromise = openDB<AuroraDB>('aurora-gba-db', 2, {
       upgrade(db) {
         if (!db.objectStoreNames.contains('metadata')) {
           const store = db.createObjectStore('metadata', { keyPath: 'id' });

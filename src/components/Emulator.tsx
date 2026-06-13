@@ -71,21 +71,15 @@ export function Emulator({ gameId, onExit }: EmulatorProps) {
       {!loading && (
         <div style={styles.controlsOverlay}>
           
-          {/* Top Left: Back button & L */}
+          {/* Top Left: L */}
           <div style={styles.topLeft}>
-            <button 
-              style={styles.backBtn}
-              onClick={onExit}
-            >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M19 12H5M12 19l-7-7 7-7" />
-              </svg>
-            </button>
             <div 
               style={styles.shoulderBtn}
               onTouchStart={() => btnPress('l')}
               onTouchEnd={() => btnRelease('l')}
-            >L</div>
+            >
+              <span style={styles.outlinedText}>L</span>
+            </div>
           </div>
 
           {/* Top Right: R */}
@@ -94,43 +88,66 @@ export function Emulator({ gameId, onExit }: EmulatorProps) {
               style={styles.shoulderBtn}
               onTouchStart={() => btnPress('r')}
               onTouchEnd={() => btnRelease('r')}
-            >R</div>
+            >
+              <span style={styles.outlinedText}>R</span>
+            </div>
           </div>
 
-          {/* Bottom Left: Thumbstick & Select */}
+          {/* Bottom Left: Thumbstick */}
           <div style={styles.bottomLeft}>
             <Thumbstick onMove={handleStickMove} onRelease={handleStickRelease} />
-            <div style={styles.selectBtnContainer}>
+          </div>
+
+          {/* Bottom Center: Select, Start, Back */}
+          <div style={styles.bottomCenter}>
+            <div style={styles.pillContainer}>
+              <button 
+                style={styles.roundSmallBtn}
+                onClick={onExit}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M19 12H5M12 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <span style={styles.outlinedTextSmall}>BACK</span>
+            </div>
+            
+            <div style={styles.pillContainer}>
               <div 
                 style={styles.pillBtn}
                 onTouchStart={() => btnPress('select')}
                 onTouchEnd={() => btnRelease('select')}
               ></div>
-              <span style={styles.pillLabel}>Select</span>
+              <span style={styles.outlinedTextSmall}>SELECT</span>
+            </div>
+
+            <div style={styles.pillContainer}>
+              <div 
+                style={styles.pillBtn}
+                onTouchStart={() => btnPress('start')}
+                onTouchEnd={() => btnRelease('start')}
+              ></div>
+              <span style={styles.outlinedTextSmall}>START</span>
             </div>
           </div>
 
-          {/* Bottom Right: A/B & Start */}
+          {/* Bottom Right: A/B */}
           <div style={styles.bottomRight}>
             <div style={styles.abWrapper}>
               <div 
                 style={styles.bBtn}
                 onTouchStart={() => btnPress('b')}
                 onTouchEnd={() => btnRelease('b')}
-              >B</div>
+              >
+                <span style={styles.outlinedTextLarge}>B</span>
+              </div>
               <div 
                 style={styles.aBtn}
                 onTouchStart={() => btnPress('a')}
                 onTouchEnd={() => btnRelease('a')}
-              >A</div>
-            </div>
-            <div style={styles.startBtnContainer}>
-              <div 
-                style={styles.pillBtn}
-                onTouchStart={() => btnPress('start')}
-                onTouchEnd={() => btnRelease('start')}
-              ></div>
-              <span style={styles.pillLabel}>Start</span>
+              >
+                <span style={styles.outlinedTextLarge}>A</span>
+              </div>
             </div>
           </div>
 
@@ -256,171 +273,155 @@ const styles: Record<string, React.CSSProperties> = {
   },
   topLeft: {
     position: 'absolute',
-    top: '24px',
-    left: '24px',
-    display: 'flex',
-    gap: '24px',
-    alignItems: 'center',
+    top: '16px',
+    left: '16px',
     pointerEvents: 'auto',
   },
   topRight: {
     position: 'absolute',
-    top: '24px',
-    right: '24px',
+    top: '16px',
+    right: '16px',
     pointerEvents: 'auto',
   },
   bottomLeft: {
     position: 'absolute',
-    bottom: '48px',
-    left: '48px',
+    bottom: '16px',
+    left: '16px',
+    pointerEvents: 'auto',
+  },
+  bottomCenter: {
+    position: 'absolute',
+    bottom: '16px',
+    left: '50%',
+    transform: 'translateX(-50%)',
     display: 'flex',
+    gap: '24px',
     alignItems: 'flex-end',
-    gap: '48px',
     pointerEvents: 'auto',
   },
   bottomRight: {
     position: 'absolute',
-    bottom: '48px',
-    right: '48px',
-    display: 'flex',
-    alignItems: 'flex-end',
-    gap: '48px',
+    bottom: '16px',
+    right: '16px',
     pointerEvents: 'auto',
   },
-  backBtn: {
-    width: '48px',
-    height: '48px',
-    borderRadius: '9999px',
-    backgroundColor: 'rgba(244, 239, 216, 0.4)',
-    color: '#F4EFD8',
-    backdropFilter: 'blur(4px)',
-    border: 'none',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    cursor: 'pointer',
-    boxShadow: '0 4px 6px rgba(0,0,0,0.3)',
-  },
   shoulderBtn: {
-    width: '100px',
-    height: '40px',
-    backgroundColor: 'rgba(244, 239, 216, 0.3)',
-    borderRadius: '9999px',
-    backdropFilter: 'blur(4px)',
+    width: '80px',
+    height: '32px',
+    backgroundColor: 'transparent',
+    borderRadius: '16px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    color: '#F4EFD8',
-    fontWeight: 700,
-    fontSize: '16px',
-    border: '1px solid rgba(244, 239, 216, 0.2)',
-    boxShadow: '0 4px 6px rgba(0,0,0,0.3)',
+    border: '1px solid rgba(255, 255, 255, 0.4)',
   },
   abWrapper: {
     position: 'relative',
-    width: '160px',
-    height: '160px',
+    width: '120px',
+    height: '120px',
   },
   bBtn: {
     position: 'absolute',
     left: 0,
-    bottom: '16px',
-    width: '72px',
-    height: '72px',
-    backgroundColor: 'rgba(244, 239, 216, 0.4)',
-    backdropFilter: 'blur(4px)',
-    borderRadius: '9999px',
-    border: '2px solid rgba(244, 239, 216, 0.6)',
+    bottom: 0,
+    width: '56px',
+    height: '56px',
+    backgroundColor: 'transparent',
+    borderRadius: '28px',
+    border: '1px solid rgba(255, 255, 255, 0.4)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    color: '#F4EFD8',
-    fontWeight: 700,
-    fontSize: '24px',
-    boxShadow: '0 4px 6px rgba(0,0,0,0.3)',
   },
   aBtn: {
     position: 'absolute',
     right: 0,
-    top: '16px',
-    width: '84px',
-    height: '84px',
-    backgroundColor: 'rgba(244, 239, 216, 0.6)',
-    backdropFilter: 'blur(4px)',
-    borderRadius: '9999px',
-    border: '2px solid #F4EFD8',
+    top: 0,
+    width: '56px',
+    height: '56px',
+    backgroundColor: 'transparent',
+    borderRadius: '28px',
+    border: '1px solid rgba(255, 255, 255, 0.4)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    color: '#F4EFD8',
-    fontWeight: 700,
-    fontSize: '28px',
-    boxShadow: '0 4px 6px rgba(0,0,0,0.3)',
   },
-  startBtnContainer: {
+  pillContainer: {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-  },
-  selectBtnContainer: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
+    gap: '8px',
   },
   pillBtn: {
-    width: '64px',
-    height: '24px',
-    backgroundColor: 'rgba(244, 239, 216, 0.4)',
-    backdropFilter: 'blur(4px)',
-    borderRadius: '9999px',
-    border: '1px solid rgba(244, 239, 216, 0.4)',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
+    width: '48px',
+    height: '16px',
+    backgroundColor: 'transparent',
+    borderRadius: '8px',
+    border: '1px solid rgba(255, 255, 255, 0.4)',
   },
-  pillLabel: {
-    marginTop: '8px',
-    fontSize: '11px',
-    fontWeight: 700,
-    textTransform: 'uppercase',
-    letterSpacing: '0.1em',
-    color: 'rgba(244, 239, 216, 0.8)',
+  roundSmallBtn: {
+    width: '24px',
+    height: '24px',
+    backgroundColor: 'transparent',
+    borderRadius: '12px',
+    border: '1px solid rgba(255, 255, 255, 0.4)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+    padding: 0,
+  },
+  outlinedText: {
+    color: 'transparent',
+    WebkitTextStroke: '1px rgba(255, 255, 255, 0.4)',
+    fontSize: '14px',
+    fontWeight: 'bold',
+  },
+  outlinedTextSmall: {
+    color: 'transparent',
+    WebkitTextStroke: '0.5px rgba(255, 255, 255, 0.4)',
+    fontSize: '10px',
+    fontWeight: 'bold',
+    letterSpacing: '1px',
+  },
+  outlinedTextLarge: {
+    color: 'transparent',
+    WebkitTextStroke: '1px rgba(255, 255, 255, 0.4)',
+    fontSize: '24px',
+    fontWeight: 'bold',
   },
   stickBase: {
     position: 'relative',
-    width: '160px',
-    height: '160px',
+    width: '120px',
+    height: '120px',
   },
   stickOuterRing: {
     position: 'absolute',
     top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: 'rgba(244, 239, 216, 0.1)',
-    borderRadius: '9999px',
-    border: '2px solid rgba(244, 239, 216, 0.2)',
+    backgroundColor: 'transparent',
+    borderRadius: '60px',
+    border: '1px solid rgba(255, 255, 255, 0.4)',
   },
   stickInnerTrack: {
-    position: 'absolute',
-    top: '16px', left: '16px', right: '16px', bottom: '16px',
-    backgroundColor: 'rgba(0, 0, 0, 0.2)',
-    borderRadius: '9999px',
+    display: 'none',
   },
   stickKnob: {
     position: 'absolute',
     top: '50%',
     left: '50%',
-    width: '96px',
-    height: '96px',
-    backgroundColor: 'rgba(244, 239, 216, 0.6)',
-    backdropFilter: 'blur(4px)',
-    borderRadius: '9999px',
-    border: '3px solid #F4EFD8',
+    width: '40px',
+    height: '40px',
+    backgroundColor: 'transparent',
+    borderRadius: '20px',
+    border: '1px solid rgba(255, 255, 255, 0.4)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
   },
   stickKnobInner: {
-    width: '40px',
-    height: '40px',
-    borderRadius: '9999px',
-    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+    width: '8px',
+    height: '8px',
+    borderRadius: '4px',
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
   },
 };

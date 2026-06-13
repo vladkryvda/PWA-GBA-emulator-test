@@ -162,12 +162,15 @@ const styles: Record<string, React.CSSProperties> = {
   },
   header: {
     display: 'flex',
+    flexWrap: 'wrap',
+    gap: '16px',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: '32px',
   },
   actions: {
     display: 'flex',
+    flexWrap: 'wrap',
     gap: '12px',
   },
   title: {
@@ -177,19 +180,19 @@ const styles: Record<string, React.CSSProperties> = {
   secondaryButton: {
     backgroundColor: 'var(--bg-card)',
     color: 'var(--text-primary)',
-    padding: '12px 24px',
+    padding: '10px 16px',
     borderRadius: '100px',
     fontWeight: 600,
-    fontSize: '16px',
+    fontSize: '14px',
     boxShadow: 'var(--shadow-sm)',
   },
   addButton: {
     backgroundColor: 'var(--accent-primary)',
     color: '#fff',
-    padding: '12px 24px',
+    padding: '10px 16px',
     borderRadius: '100px',
     fontWeight: 600,
-    fontSize: '16px',
+    fontSize: '14px',
     boxShadow: 'var(--shadow-sm)',
   },
   emptyState: {
@@ -200,8 +203,8 @@ const styles: Record<string, React.CSSProperties> = {
   },
   grid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-    gap: '24px',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
+    gap: '16px',
   },
   card: {
     backgroundColor: 'var(--bg-card)',
@@ -213,12 +216,12 @@ const styles: Record<string, React.CSSProperties> = {
     flexDirection: 'column',
   },
   coverPlaceholder: {
-    height: '160px',
+    aspectRatio: '1',
     backgroundColor: 'var(--accent-primary)',
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    fontSize: '64px',
+    fontSize: '48px',
     color: '#fff',
     fontWeight: 'bold',
   },
