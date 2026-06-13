@@ -24,16 +24,12 @@ export class EmulatorEngine {
     this.gameId = gameId;
     const romData = await LibraryStorage.getRom(gameId);
     if (!romData) throw new Error('ROM not found');
-
     const state = await SavesStorage.loadState(gameId, 'auto');
 
-    // Mute initially until user interaction if needed, though Nostalgist handles this.
     const romBlob = new Blob([romData], { type: 'application/octet-stream' });
-    const romFile = new File([romBlob], 'game.gba');
-
     this.nostalgistInstance = await Nostalgist.launch({
       core: 'mgba',
-      rom: romFile,
+      rom: { fileName: 'game.gba', fileContent: romBlob },
       element: this.canvas,
       state: state || undefined,
     });
