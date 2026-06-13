@@ -15,6 +15,11 @@ export function Emulator({ gameId, onExit }: EmulatorProps) {
     let active = true;
     const init = async () => {
       if (canvasRef.current && !engineRef.current) {
+        canvasRef.current.addEventListener('webglcontextlost', (e) => {
+          e.preventDefault();
+          window.location.reload();
+        });
+        
         engineRef.current = new EmulatorEngine(canvasRef.current);
         try {
           await engineRef.current.loadGame(gameId);
@@ -116,7 +121,7 @@ export function Emulator({ gameId, onExit }: EmulatorProps) {
         .ctrl-top-right { position: absolute; top: 16px; right: 16px; pointer-events: auto; }
         .ctrl-bottom-left { position: absolute; bottom: 16px; left: 16px; pointer-events: auto; }
         .ctrl-bottom-center { position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); display: flex; gap: 24px; align-items: flex-end; pointer-events: auto; }
-        .ctrl-bottom-right { position: absolute; bottom: 16px; right: 16px; pointer-events: auto; }
+        .ctrl-bottom-right { position: absolute; bottom: 16px; right: 48px; pointer-events: auto; }
 
         @media (orientation: portrait) {
           .game-screen-area {
@@ -124,7 +129,7 @@ export function Emulator({ gameId, onExit }: EmulatorProps) {
             flex: none;
             width: 100vw;
             aspect-ratio: 3/2;
-            margin-top: calc(env(safe-area-inset-top, 40px) + 20px);
+            margin-top: env(safe-area-inset-top, 0px);
           }
           .controls-area {
             position: relative;
@@ -139,17 +144,17 @@ export function Emulator({ gameId, onExit }: EmulatorProps) {
         }
       `}</style>
       
-      <div className="game-screen-area" onTouchStart={handlePointerDown} onTouchMove={handlePointerMove}>
+      <div className="game-screen-area">
         <canvas ref={canvasRef} style={styles.canvas} />
       </div>
 
       {loading && <div style={styles.loading}>Loading...</div>}
 
       {!loading && (
-        <div className="controls-area" onTouchStart={handlePointerDown} onTouchMove={handlePointerMove}>
+        <div className="controls-area">
           
           {/* Top Left: L */}
-          <div className="ctrl-top-left hideable-controls" style={{ opacity: controlsVisible ? 1 : 0 }}>
+          <div className="ctrl-top-left hideable-controls" style={{ opacity: controlsVisible ? 1 : 0 }} onTouchStart={handlePointerDown} onTouchMove={handlePointerMove}>
             <div 
               style={styles.shoulderBtn}
               onTouchStart={() => btnPress('l')}
@@ -160,7 +165,7 @@ export function Emulator({ gameId, onExit }: EmulatorProps) {
           </div>
 
           {/* Top Right: R */}
-          <div className="ctrl-top-right hideable-controls" style={{ opacity: controlsVisible ? 1 : 0 }}>
+          <div className="ctrl-top-right hideable-controls" style={{ opacity: controlsVisible ? 1 : 0 }} onTouchStart={handlePointerDown} onTouchMove={handlePointerMove}>
             <div 
               style={styles.shoulderBtn}
               onTouchStart={() => btnPress('r')}
@@ -171,12 +176,12 @@ export function Emulator({ gameId, onExit }: EmulatorProps) {
           </div>
 
           {/* Bottom Left: Thumbstick */}
-          <div className="ctrl-bottom-left">
+          <div className="ctrl-bottom-left hideable-controls" style={{ opacity: controlsVisible ? 1 : 0 }} onTouchStart={handlePointerDown} onTouchMove={handlePointerMove}>
             <Thumbstick onMove={handleStickMove} onRelease={handleStickRelease} />
           </div>
 
           {/* Bottom Center: Select, Start, Back */}
-          <div className="ctrl-bottom-center hideable-controls" style={{ opacity: controlsVisible ? 1 : 0 }}>
+          <div className="ctrl-bottom-center hideable-controls" style={{ opacity: controlsVisible ? 1 : 0 }} onTouchStart={handlePointerDown} onTouchMove={handlePointerMove}>
             <div style={styles.pillContainer}>
               <button 
                 style={styles.roundSmallBtn}
@@ -209,7 +214,7 @@ export function Emulator({ gameId, onExit }: EmulatorProps) {
           </div>
 
           {/* Bottom Right: A/B */}
-          <div className="ctrl-bottom-right">
+          <div className="ctrl-bottom-right hideable-controls" style={{ opacity: controlsVisible ? 1 : 0 }} onTouchStart={handlePointerDown} onTouchMove={handlePointerMove}>
             <div style={styles.abWrapper}>
               <div 
                 style={styles.bBtn}
@@ -390,21 +395,18 @@ const styles: Record<string, React.CSSProperties> = {
     padding: 0,
   },
   outlinedText: {
-    color: 'transparent',
-    WebkitTextStroke: '1px rgba(255, 255, 255, 0.4)',
+    color: 'rgba(255, 255, 255, 0.5)',
     fontSize: '14px',
     fontWeight: 'bold',
   },
   outlinedTextSmall: {
-    color: 'transparent',
-    WebkitTextStroke: '0.5px rgba(255, 255, 255, 0.4)',
+    color: 'rgba(255, 255, 255, 0.5)',
     fontSize: '10px',
     fontWeight: 'bold',
     letterSpacing: '1px',
   },
   outlinedTextLarge: {
-    color: 'transparent',
-    WebkitTextStroke: '1px rgba(255, 255, 255, 0.4)',
+    color: 'rgba(255, 255, 255, 0.5)',
     fontSize: '24px',
     fontWeight: 'bold',
   },

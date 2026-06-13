@@ -15,10 +15,7 @@ export class EmulatorEngine {
     this.canvas = canvas;
     this.visibilityHandler = () => {
       if (document.hidden) {
-        if (this.nostalgistInstance) this.nostalgistInstance.pause();
         this.saveState('auto');
-      } else {
-        if (this.nostalgistInstance) this.nostalgistInstance.resume();
       }
     };
   }
@@ -35,6 +32,10 @@ export class EmulatorEngine {
       rom: { fileName: 'game.gba', fileContent: romBlob },
       element: this.canvas,
       state: state || undefined,
+      retroarchConfig: {
+        rewind_enable: false,
+        video_vsync: true,
+      }
     });
 
     this.sessionStartTime = Date.now();
@@ -72,23 +73,32 @@ export class EmulatorEngine {
   }
 
   async exit() {
-    if (this.gameId && this.sessionStartTime > 0) {
-      await this.saveState('auto');
-      const sessionDuration = Date.now() - this.sessionStartTime;
-      const games = await LibraryStorage.getAllGames();
-      const game = games.find(g => g.id === this.gameId);
-      if (game) {
-        await LibraryStorage.updateMetadata(this.gameId, {
-          totalPlayTimeMs: (game.totalPlayTimeMs || 0) + sessionDuration
-        });
-      }
-    }
     this.stopAutoSave();
-    if (this.nostalgistInstance) {
-      this.nostalgistInstance.exit();
-      this.nostalgistInstance = null;
+    try {
+      if (this.gameId && this.sessionStartTime > 0) {
+        await this.saveState('auto');
+        const sessionDuration = Date.now() - this.sessionStartTime;
+        const games = await LibraryStorage.getAllGames();
+        const game = games.find((g: any) => g.id === this.gameId);
+        if (game) {
+          await LibraryStorage.updateMetadata(this.gameId, {
+            totalPlayTimeMs: (game.totalPlayTimeMs || 0) + sessionDuration
+          });
+        }
+      }
+    } catch(e) {
+      console.error("Error saving on exit:", e);
+    } finally {
+      if (this.nostalgistInstance) {
+        try {
+          this.nostalgistInstance.exit();
+        } catch(e) {
+          console.error("Error destroying nostalgist:", e);
+        }
+        this.nostalgistInstance = null;
+      }
+      this.gameId = null;
     }
-    this.gameId = null;
   }
 
   pressButton(button: string) {

@@ -19,10 +19,6 @@ export default function App() {
       ) : (
         <Library onLaunchGame={setActiveGameId} />
       )}
-      
-      {isPortrait && activeGameId && (
-        <Overlay />
-      )}
     </>
   );
 }
