@@ -8,10 +8,12 @@ interface LibraryProps {
 
 export function Library({ onLaunchGame }: LibraryProps) {
   const [games, setGames] = useState<GameMetadata[]>([]);
+  const [seeding, setSeeding] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const loadGames = async () => {
-    const allGames = await LibraryStorage.getAllGames();
+    let allGames = await LibraryStorage.getAllGames();
+    
     // Repair invalid totalPlayTimeMs
     for (const game of allGames) {
       if (game.totalPlayTimeMs > 31536000000) { // Over 1 year is definitely a bug
@@ -19,6 +21,33 @@ export function Library({ onLaunchGame }: LibraryProps) {
         game.totalPlayTimeMs = 0;
       }
     }
+
+    if (allGames.length === 0) {
+      // Check if there is a default game file included in the build
+      for (const romPath of ['/game.gbl', '/game.gba', '/default.gba', '/default.gbl']) {
+        try {
+          const checkRes = await fetch(romPath, { method: 'HEAD' });
+          const contentType = checkRes.headers.get('content-type') || '';
+          if (checkRes.ok && !contentType.includes('text/html')) {
+            setSeeding(true);
+            const response = await fetch(romPath);
+            if (response.ok) {
+              const blob = await response.blob();
+              const fileName = romPath.substring(1); // 'game.gbl', 'game.gba', etc.
+              const file = new File([blob], fileName, { type: 'application/octet-stream' });
+              await LibraryStorage.addGame(file);
+              allGames = await LibraryStorage.getAllGames();
+              break; // loaded successfully
+            }
+          }
+        } catch (err) {
+          console.log(`Check/seed for ${romPath} skipped or failed:`, err);
+        } finally {
+          setSeeding(false);
+        }
+      }
+    }
+
     setGames(allGames);
   };
 
@@ -130,7 +159,14 @@ export function Library({ onLaunchGame }: LibraryProps) {
 
       {games.length === 0 ? (
         <div style={styles.emptyState}>
-          <p>No games yet. Tap Add Game to import a .gba file.</p>
+          {seeding ? (
+            <div className="flex flex-col items-center justify-center gap-4 py-8">
+              <div className="w-8 h-8 rounded-full border-4 border-amber-500 border-t-transparent animate-spin"></div>
+              <p className="text-gray-400 font-medium">Bootstrapping default game from repository...</p>
+            </div>
+          ) : (
+            <p>No games yet. Tap Add Game to import a .gba file.</p>
+          )}
         </div>
       ) : (
         <div style={styles.grid}>

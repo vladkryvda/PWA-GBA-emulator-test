@@ -24,7 +24,7 @@ export class LibraryStorage {
       }
     }
     internalTitle = internalTitle.trim();
-    const title = internalTitle || file.name.replace(/\.gba$/i, '').trim();
+    const title = internalTitle || file.name.replace(/\.(gba|gbl)$/i, '').trim();
 
     const db = await getDB();
     const tx = db.transaction(['metadata', 'roms'], 'readwrite');
