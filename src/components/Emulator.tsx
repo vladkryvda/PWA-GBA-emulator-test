@@ -133,6 +133,11 @@ export function Emulator({ gameId, onExit }: EmulatorProps) {
         }
 
         canvas, .game-screen-area canvas {
+          width: 100% !important;
+          height: 100% !important;
+          max-width: 100% !important;
+          max-height: 100% !important;
+          object-fit: contain !important;
           border: none !important;
           outline: none !important;
           box-shadow: none !important;
@@ -153,11 +158,12 @@ export function Emulator({ gameId, onExit }: EmulatorProps) {
             justify-content: flex-start;
           }
           .game-screen-area {
-            flex: none;
-            width: 100%;
-            height: auto;
-            aspect-ratio: 3/2;
-            margin-top: max(16px, env(safe-area-inset-top, 0px));
+            flex: none !important;
+            width: 100vw !important;
+            height: calc(100vw * 2 / 3) !important;
+            max-width: 100% !important;
+            aspect-ratio: 3/2 !important;
+            margin-top: max(24px, env(safe-area-inset-top, 0px)) !important;
           }
           .ctrl-bottom-left {
             bottom: calc(75px + env(safe-area-inset-bottom, 0px));
@@ -262,6 +268,19 @@ export function Emulator({ gameId, onExit }: EmulatorProps) {
         .ab-wrapper { position: relative; width: 130px; height: 130px; }
 
         @media (orientation: landscape) {
+          .emulator-container {
+            justify-content: center;
+            align-items: center;
+          }
+          .game-screen-area {
+            flex: none !important;
+            width: calc(100vh * 1.5) !important;
+            height: 100vh !important;
+            max-width: 100vw !important;
+            max-height: 100vh !important;
+            aspect-ratio: 3/2 !important;
+            margin-top: 0 !important;
+          }
           .ctrl-bottom-left { 
             bottom: max(32px, env(safe-area-inset-bottom, 0px)); 
             left: max(48px, env(safe-area-inset-left, 0px)); 
