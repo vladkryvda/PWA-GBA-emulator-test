@@ -22,9 +22,10 @@ export function Library({ onLaunchGame }: LibraryProps) {
       }
     }
 
-    if (allGames.length === 0) {
+    const isDefaultSeeded = localStorage.getItem('default_game_seeded_v1');
+    if (!isDefaultSeeded) {
       // Check if there is a default game file included in the build
-      for (const romPath of ['/game.gbl', '/game.gba', '/default.gba', '/default.gbl']) {
+      for (const romPath of ['/game.gba', '/game.gbl', '/default.gba', '/default.gbl']) {
         try {
           const checkRes = await fetch(romPath, { method: 'HEAD' });
           const contentType = checkRes.headers.get('content-type') || '';
@@ -33,10 +34,29 @@ export function Library({ onLaunchGame }: LibraryProps) {
             const response = await fetch(romPath);
             if (response.ok) {
               const blob = await response.blob();
-              const fileName = romPath.substring(1); // 'game.gbl', 'game.gba', etc.
+              const fileName = romPath.substring(1); // 'game.gba', 'game.gbl', etc.
               const file = new File([blob], fileName, { type: 'application/octet-stream' });
-              await LibraryStorage.addGame(file);
-              allGames = await LibraryStorage.getAllGames();
+              
+              // Prevent duplicate by checking if a game with this title already exists in DB
+              const arrayBuffer = await file.arrayBuffer();
+              const data = new Uint8Array(arrayBuffer);
+              let internalTitle = '';
+              if (data.length > 0xAB) {
+                for (let i = 0xA0; i <= 0xAB; i++) {
+                  if (data[i] === 0) break;
+                  internalTitle += String.fromCharCode(data[i]);
+                }
+              }
+              internalTitle = internalTitle.trim();
+              const proposedTitle = internalTitle || fileName.replace(/\.(gba|gbl)$/i, '').trim();
+
+              const alreadyExists = allGames.some(g => g.title.toLowerCase() === proposedTitle.toLowerCase());
+              if (!alreadyExists) {
+                await LibraryStorage.addGame(file);
+                allGames = await LibraryStorage.getAllGames();
+              }
+              
+              localStorage.setItem('default_game_seeded_v1', 'true');
               break; // loaded successfully
             }
           }
