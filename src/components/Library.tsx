@@ -14,12 +14,29 @@ export function Library({ onLaunchGame }: LibraryProps) {
   const loadGames = async () => {
     let allGames = await LibraryStorage.getAllGames();
     
-    // Repair invalid totalPlayTimeMs
+    // Repair invalid totalPlayTimeMs or empty corrupt games
+    const validGames: GameMetadata[] = [];
+    let hadCorrupt = false;
     for (const game of allGames) {
       if (game.totalPlayTimeMs > 31536000000) { // Over 1 year is definitely a bug
         await LibraryStorage.updateMetadata(game.id, { totalPlayTimeMs: 0 });
         game.totalPlayTimeMs = 0;
       }
+
+      // Check ROM size to ensure we don't have empty 0-byte corrupt entries
+      const romData = await LibraryStorage.getRom(game.id);
+      if (!romData || romData.length < 1024) {
+        console.warn(`Deleting empty/invalid game ID ${game.id} ("${game.title}")`);
+        await LibraryStorage.deleteGame(game.id);
+        hadCorrupt = true;
+      } else {
+        validGames.push(game);
+      }
+    }
+
+    if (hadCorrupt) {
+      localStorage.removeItem('default_game_seeded_v1');
+      allGames = validGames;
     }
 
     const isDefaultSeeded = localStorage.getItem('default_game_seeded_v1');
@@ -34,6 +51,13 @@ export function Library({ onLaunchGame }: LibraryProps) {
             const response = await fetch(romPath);
             if (response.ok) {
               const blob = await response.blob();
+              
+              // Only seed if the file contains actual ROM data (at least 1KB, typically much more)
+              if (blob.size < 1024) {
+                console.warn(`Skipping seeding of ${romPath} as it is empty or too small (${blob.size} bytes).`);
+                continue;
+              }
+
               const fileName = romPath.substring(1); // 'game.gba', 'game.gbl', etc.
               const file = new File([blob], fileName, { type: 'application/octet-stream' });
               
@@ -193,7 +217,25 @@ export function Library({ onLaunchGame }: LibraryProps) {
           {games.map(game => (
             <div key={game.id} style={styles.card} onClick={() => onLaunchGame(game.id)}>
               <div style={styles.cardInfo}>
-                <h3 style={styles.cardTitle}>{game.title}</h3>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
+                  <h3 style={styles.cardTitle}>{game.title}</h3>
+                  <button 
+                    style={styles.deleteButton} 
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      if (confirm(`Are you sure you want to delete ${game.title}?`)) {
+                        await LibraryStorage.deleteGame(game.id);
+                        await loadGames();
+                      }
+                    }}
+                    title="Delete Game"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="3 6 5 6 21 6"></polyline>
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                  </button>
+                </div>
                 <p style={styles.cardDetail}>Played: {formatTime(game.totalPlayTimeMs)}</p>
                 <p style={styles.cardDetail}>Last played: {formatLastPlayed(game.lastPlayedAt)}</p>
               </div>
@@ -280,5 +322,18 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '14px',
     color: 'var(--text-secondary)',
     marginBottom: '4px',
+  },
+  deleteButton: {
+    backgroundColor: 'transparent',
+    border: 'none',
+    color: '#ef4444',
+    cursor: 'pointer',
+    padding: '4px',
+    borderRadius: '4px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    opacity: 0.7,
+    transition: 'opacity 0.2s',
   },
 };
