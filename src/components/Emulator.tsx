@@ -157,40 +157,19 @@ export function Emulator({ gameId, onExit }: EmulatorProps) {
             width: 100%;
             height: auto;
             aspect-ratio: 3/2;
-            margin-top: env(safe-area-inset-top, 0px);
+            margin-top: max(16px, env(safe-area-inset-top, 0px));
           }
-          
-          /* Position controls tightly towards the bottom of the screen in portrait mode */
-          .ctrl-bottom {
-            bottom: 20px !important;
-            padding-bottom: env(safe-area-inset-bottom, 0px) !important;
-          }
-          
           .ctrl-bottom-left {
-            bottom: 60px !important;
-            left: 20px !important;
+            bottom: calc(75px + env(safe-area-inset-bottom, 0px));
+            left: 24px;
           }
-          
           .ctrl-bottom-right {
-            bottom: 60px !important;
-            right: 20px !important;
+            bottom: calc(75px + env(safe-area-inset-bottom, 0px));
+            right: 24px;
           }
-          
-          /* Move shoulders nicely above Dpad/AB to be reachable in vertical mode */
-          .ctrl-top-left {
-            top: auto !important;
-            bottom: 195px !important;
-            left: 20px !important;
-          }
-          .ctrl-top-right {
-            top: auto !important;
-            bottom: 195px !important;
-            right: 20px !important;
-          }
-
           .ab-wrapper {
-            width: 170px !important;
-            height: 170px !important;
+            width: 130px;
+            height: 130px;
           }
         }
 
@@ -220,46 +199,92 @@ export function Emulator({ gameId, onExit }: EmulatorProps) {
         .secondary-btn svg { stroke: rgba(255, 255, 255, 0.35); }
 
         /* Shapes */
-        .btn-shoulder { width: 80px; height: 32px; border-radius: 16px; display: flex; align-items: center; justify-content: center; }
-        .btn-shoulder span { font-size: 14px; font-weight: bold; }
-        .touch-area-shoulder { padding: 16px; margin: -16px; }
+        .touch-area-round { width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; position: absolute; }
+        
+        .btn-round-large { 
+          width: 44px; 
+          height: 44px; 
+          border-radius: 22px; 
+          display: flex; 
+          align-items: center; 
+          justify-content: center; 
+          font-size: 18px; 
+          font-weight: bold; 
+        }
 
-        .btn-round-large { width: 56px; height: 56px; border-radius: 28px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; }
-        .touch-area-round { width: 90px; height: 90px; display: flex; align-items: center; justify-content: center; position: absolute; }
-        .b-btn-pos { left: 0; bottom: 0; }
-        .a-btn-pos { right: 0; top: 0; }
+        .r-btn-pos { top: 0; left: 50%; transform: translateX(-50%); }
+        .b-btn-pos { bottom: 0; left: 50%; transform: translateX(-50%); }
+        .l-btn-pos { left: 0; top: 50%; transform: translateY(-50%); }
+        .a-btn-pos { right: 0; top: 50%; transform: translateY(-50%); }
 
-        .btn-pill { width: 68px; height: 26px; border-radius: 13px; display: flex; align-items: center; justify-content: center; }
-        .btn-pill span { font-size: 8px; font-weight: bold; letter-spacing: 0.5px; }
+        .btn-pill-slanted { 
+          width: 58px; 
+          height: 22px; 
+          border-radius: 11px; 
+          display: flex; 
+          align-items: center; 
+          justify-content: center; 
+          transform: rotate(-35deg);
+          border: 1px solid rgba(255, 255, 255, 0.25);
+        }
+        .btn-pill-slanted span { 
+          font-size: 8px; 
+          font-weight: bold; 
+          letter-spacing: 0.5px; 
+          color: rgba(255, 255, 255, 0.45);
+        }
 
         .btn-round-small { width: 34px; height: 34px; border-radius: 17px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
 
         /* Positions */
-        .ctrl-top-left { position: absolute; top: 16px; left: 16px; }
-        .ctrl-top-right { position: absolute; top: 16px; right: 16px; }
-        
-        .ctrl-bottom {
+        .btn-back-container {
           position: absolute;
-          bottom: 12px;
+          bottom: calc(16px + env(safe-area-inset-bottom, 0px));
           left: 50%;
           transform: translateX(-50%);
+          pointer-events: auto;
+          z-index: 20;
+        }
+        
+        .select-start-container {
+          position: absolute;
           display: flex;
-          gap: 24px;
-          align-items: center;
-          padding-bottom: env(safe-area-inset-bottom, 0px);
+          gap: 32px;
+          bottom: 240px;
+          left: 50%;
+          transform: translateX(-50%);
+          pointer-events: auto;
         }
 
         .ctrl-bottom-left { position: absolute; bottom: 85px; left: 24px; pointer-events: auto; }
         .ctrl-bottom-right { position: absolute; bottom: 85px; right: 24px; }
         
-        .ab-wrapper { position: relative; width: 140px; height: 140px; }
+        .ab-wrapper { position: relative; width: 130px; height: 130px; }
 
-        @media (orientation: portrait) {
-          .ab-wrapper { width: 170px; height: 170px; } /* Clean separation */
-        }
         @media (orientation: landscape) {
-          .ctrl-bottom-left { bottom: 48px; left: 48px; }
-          .ctrl-bottom-right { bottom: 48px; right: 96px; }
+          .ctrl-bottom-left { 
+            bottom: max(32px, env(safe-area-inset-bottom, 0px)); 
+            left: max(48px, env(safe-area-inset-left, 0px)); 
+          }
+          .ctrl-bottom-right { 
+            bottom: max(32px, env(safe-area-inset-bottom, 0px)); 
+            right: max(48px, env(safe-area-inset-right, 0px)); 
+          }
+          .ab-wrapper { width: 135px; height: 135px; }
+          .select-start-container {
+            position: static;
+            display: contents;
+          }
+          .ctrl-select {
+            position: absolute;
+            top: max(24px, env(safe-area-inset-top, 0px));
+            left: max(24px, env(safe-area-inset-left, 0px));
+          }
+          .ctrl-start {
+            position: absolute;
+            top: max(24px, env(safe-area-inset-top, 0px));
+            right: max(24px, env(safe-area-inset-right, 0px));
+          }
         }
       `}</style>
       
@@ -272,76 +297,72 @@ export function Emulator({ gameId, onExit }: EmulatorProps) {
       {!loading && (
         <div className="controls-area">
           
-          <div className="ctrl-top-left">
-            <div 
-              className="touch-area touch-area-shoulder"
-              onTouchStart={() => btnPress('l')}
-              onTouchEnd={() => btnRelease('l')}
-              onTouchCancel={() => btnRelease('l')}
-            >
-              <div className="btn-shoulder secondary-btn anim-press">
-                <span>L</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="ctrl-top-right">
-            <div 
-              className="touch-area touch-area-shoulder"
-              onTouchStart={() => btnPress('r')}
-              onTouchEnd={() => btnRelease('r')}
-              onTouchCancel={() => btnRelease('r')}
-            >
-              <div className="btn-shoulder secondary-btn anim-press">
-                <span>R</span>
-              </div>
-            </div>
-          </div>
-
           <div className="ctrl-bottom-left">
             <Thumbstick onMove={handleStickMove} onRelease={handleStickRelease} />
           </div>
 
-          <div className="ctrl-bottom">
+          <div className="select-start-container">
             <div 
-              className="touch-area" 
-              style={{ padding: '8px' }}
+              className="touch-area ctrl-select" 
               onTouchStart={() => btnPress('select')} 
               onTouchEnd={() => btnRelease('select')} 
               onTouchCancel={() => btnRelease('select')}
             >
-              <div className="btn-pill secondary-btn anim-press">
+              <div className="btn-pill-slanted anim-press">
                 <span>SELECT</span>
               </div>
             </div>
 
             <div 
-              className="touch-area" 
-              style={{ padding: '8px' }}
-              onTouchStart={(e) => { e.preventDefault(); onExit(); }}
-            >
-              <div className="btn-round-small secondary-btn anim-press">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M19 12H5M12 19l-7-7 7-7" />
-                </svg>
-              </div>
-            </div>
-
-            <div 
-              className="touch-area" 
-              style={{ padding: '8px' }}
+              className="touch-area ctrl-start" 
               onTouchStart={() => btnPress('start')} 
               onTouchEnd={() => btnRelease('start')} 
               onTouchCancel={() => btnRelease('start')}
             >
-              <div className="btn-pill secondary-btn anim-press">
+              <div className="btn-pill-slanted anim-press">
                 <span>START</span>
               </div>
             </div>
           </div>
 
+          <div 
+            className="touch-area btn-back-container"
+            onTouchStart={(e) => { e.preventDefault(); onExit(); }}
+          >
+            <div className="btn-round-small secondary-btn anim-press">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M19 12H5M12 19l-7-7 7-7" />
+              </svg>
+            </div>
+          </div>
+
           <div className="ctrl-bottom-right">
             <div className="ab-wrapper">
+              {/* R - Top */}
+              <div 
+                className="touch-area touch-area-round r-btn-pos"
+                onTouchStart={() => btnPress('r')}
+                onTouchEnd={() => btnRelease('r')}
+                onTouchCancel={() => btnRelease('r')}
+              >
+                <div className="btn-round-large secondary-btn anim-press">
+                  <span>R</span>
+                </div>
+              </div>
+
+              {/* L - Left */}
+              <div 
+                className="touch-area touch-area-round l-btn-pos"
+                onTouchStart={() => btnPress('l')}
+                onTouchEnd={() => btnRelease('l')}
+                onTouchCancel={() => btnRelease('l')}
+              >
+                <div className="btn-round-large secondary-btn anim-press">
+                  <span>L</span>
+                </div>
+              </div>
+
+              {/* B - Bottom */}
               <div 
                 className="touch-area touch-area-round b-btn-pos"
                 onTouchStart={() => btnPress('b')}
@@ -352,6 +373,8 @@ export function Emulator({ gameId, onExit }: EmulatorProps) {
                   <span>B</span>
                 </div>
               </div>
+
+              {/* A - Right */}
               <div 
                 className="touch-area touch-area-round a-btn-pos"
                 onTouchStart={() => btnPress('a')}
